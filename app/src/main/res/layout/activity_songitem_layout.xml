@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <ImageView 
+        android:id="@+id/songiItemImage"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/artistCover"
+        android:src="@drawable/orange" />
+    
+    <TextView 
+        android:id="@+id/songName"
+        android:layout_width="fill_parent"
+        android:layout_height="26dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@id/songiItemImage"
+        android:singleLine="true"
+        android:textSize="16sp" />
+    
+    <TextView 
+        android:id="@+id/artistName"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_toRightOf="@id/songiItemImage"
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        android:textSize="12sp" />
+    
+</RelativeLayout>
