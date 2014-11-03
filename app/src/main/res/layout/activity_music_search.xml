@@ -1,0 +1,38 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MusicSearchActivity" >
+
+    <TextView 
+        android:id="@+id/Choose_song"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/Search_track" 
+        android:gravity="center" />  
+        
+    <EditText
+        android:id="@+id/Search_Music"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" 
+        android:hint="@string/Enter_A_SONG"
+        android:layout_below="@id/Choose_song" />
+    
+    <Button 
+        android:id="@+id/Search_Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+		android:layout_below="@id/Search_Music"
+		android:text="@string/Search_button_text"
+		android:onClick="searchMusic" />
+    
+    <ListView 
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dividerHeight="0.1dp"
+        android:layout_below="@id/Search_Button"
+        android:divider="#00CCCC" >
+    </ListView>
+    
+</RelativeLayout>

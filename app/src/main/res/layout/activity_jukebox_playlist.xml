@@ -1,0 +1,49 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".JukeboxPlaylistActivity" >
+    <!--android:id="@+id/songList"-->
+       
+    <ListView 
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.70"
+        android:dividerHeight="0.1dp"
+        android:divider="#00CCCC" >
+    </ListView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/refreshButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:layout_marginRight="-8dp"
+            android:layout_marginEnd="-8dp"
+            android:drawableLeft="@drawable/repeat_1"
+            android:onClick="refreshList" />
+        <ImageButton
+            android:id="@+id/playButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:layout_marginRight="-8dp"
+            android:layout_marginEnd="-8dp"
+            android:drawableLeft="@drawable/ic_action_play"
+            android:onClick="playMusic" />
+        <Button
+            android:id="@+id/nextTrackButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:drawableRight="@drawable/ic_action_next"
+            android:onClick="skipToNext" />
+    </LinearLayout>
+</LinearLayout>

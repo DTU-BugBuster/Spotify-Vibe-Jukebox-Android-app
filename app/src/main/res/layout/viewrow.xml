@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+        
+        <TextView 
+        android:id="@+id/songName"
+        android:layout_width="wrap_content"
+    	android:layout_height="wrap_content" 
+    	android:textSize="20sp" />
+
+		<TextView 
+	    android:id="@+id/artistName"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:text="@string/ArtistName"
+    	android:textSize="14sp" />
+		
+	</LinearLayout>
+        
+    <ImageView 
+        android:id="@+id/add_song_plus_icon"
+        android:contentDescription="@string/image_desc"
+        android:layout_width="22dp"
+     	android:layout_height="22dp"
+     	android:layout_alignParentRight="true"
+     	android:layout_centerVertical="true"
+     	android:layout_marginLeft="4dp"
+     	android:layout_marginRight="10dp"
+     	android:src="@drawable/circle_plus" /> 
+     	
+     	<ImageView 
+        android:id="@+id/speaker_icon_playing_track"
+        android:contentDescription="@string/image_desc"
+        android:layout_width="22dp"
+     	android:layout_height="22dp"
+     	android:layout_alignParentRight="true"
+     	android:layout_centerVertical="true"
+     	android:layout_marginLeft="3dp"
+     	android:layout_marginRight="10dp"
+     	android:src="@drawable/speaker" />
+         
+</RelativeLayout>
