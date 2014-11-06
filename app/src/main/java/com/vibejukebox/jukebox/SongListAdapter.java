@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class SongListAdapter extends BaseAdapter
 {
 	private static final String TAG = SongListAdapter.class.getSimpleName();
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	
 	private static LayoutInflater mInflator = null;
 	Context mContext;
