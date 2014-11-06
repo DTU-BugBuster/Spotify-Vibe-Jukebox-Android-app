@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,7 +35,7 @@ import java.util.List;
 public class JukeboxListOfJukeboxes extends FragmentActivity 
 {
 	private final static String TAG = JukeboxListOfJukeboxes.class.getSimpleName();
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = DebugLog.DEBUG;
 	
 	//Define request code to send to Google Play Service
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -50,14 +49,6 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 	private static final long UPDATE_INTERVAL_IN_MILLISECONDS = MILLISECONDS_PER_SECOND
 		      * UPDATE_INTERVAL_IN_SECONDS;
 
-	// Name of shared preferences repository that stores persistent state
-    public static final String SHARED_PREFERENCES =
-            "com.vibejukebox.jukebox.JukeboxListOfJukeboxes.SHARED_PREFERENCES";
-	
-    //Shared Preferences to keep location
-    SharedPreferences mPref;
-    SharedPreferences.Editor mEditor;
-    
 	private String chosenJukeBoxID;
 	private List<JukeboxObject> mJukeboxObjectList;
 	private List<String> mNearByJukeboxes;
@@ -144,12 +135,10 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 			case Activity.RESULT_OK:
 				Log.d(TAG, "Connected to Google Play Services."); 
 				break;
-				
 			default:
 				Log.d(TAG, "Could not connect to Google Play Services.");
 				break;
 			}
-			
 			default:
 				Log.d(TAG, "Unknown request code received for the activity.");
 				break;
@@ -169,17 +158,15 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 			@Override
 			public void done(List<JukeboxObject> jukeBoxList, ParseException e) {
 				if(e == null){
-                    if(DEBUG){
-                        Log.d(TAG, "Object is in JukeBox");
-                        Log.d(TAG, "Number of Jukboxes near is :   " + jukeBoxList.size());
-                    }
+                    if(DEBUG)
+                        Log.d(TAG, "Number of nearby Jukeboxes is:   " + jukeBoxList.size());
 
 					setJukeboxList(jukeBoxList);
 					
 					for(JukeboxObject jukebox : jukeBoxList) 
 					{
 						String jukeboxName = jukebox.getName();
-						Log.e(TAG, "Jukebox name is :  " + jukeboxName);
+						Log.d(TAG, "Jukebox name is :  " + jukeboxName);
 						nearbyJukeboxes.add(jukeboxName);
 					}
 					
@@ -187,7 +174,7 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 					updateJukeboxList(nearbyJukeboxes);
 				}
 				else{
-					Log.e(TAG, "Something went wrong");
+					Log.e(TAG, "Something went wrong getting nearby jukeboxes.");
 					 showPoorConnectionToast();
 					e.printStackTrace();
 				}
@@ -224,8 +211,7 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 	
 				JukeboxObject chosenJukebox = mJukeboxObjectList.get(position);
 				chosenJukeBoxID = chosenJukebox.getObjectId();
-				
-				Log.d(TAG, "CHOSEN JUKEBOX ID::   " + chosenJukeBoxID);
+
 				List<String> songList = chosenJukebox.getQueueSongIds();
 
 				//TODO: fix null pointer crash when accessing an empty jukebox
@@ -285,7 +271,6 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 				errorFragment.show(getFragmentManager(), "Location Updates");
 			}
 		}
-		
 		return false;
 	}
 	
@@ -293,13 +278,15 @@ public class JukeboxListOfJukeboxes extends FragmentActivity
 	 * In response to a request to start updates send a request to 
 	 * location services
 	 */
-	private void startPeroidicUpdates()
+   //TODO: request location udpates
+	private void startPeriodicUpdates()
 	{
 		mlocationClient.requestLocationUpdates(mLocationRequest, (LocationListener) this);
 	}
 	
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	private void showErrorDialog(int errorCode){
+	private void showErrorDialog(int errorCode)
+    {
 		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(errorCode, this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
 		
 		if(errorDialog != null){

@@ -16,7 +16,9 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.parse.GetCallback;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 
 import org.apache.http.Header;
 import org.json.JSONArray;
@@ -27,14 +29,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class JukeboxSavedPlaylists extends ListActivity {
-
+public class JukeboxSavedPlaylists extends ListActivity
+{
     private static final String TAG = JukeboxSavedPlaylists.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = DebugLog.DEBUG;
 
     public static final String TOKEN = "Spotify_access_token";
     private static final int GET_TRACK_PLAYLIST_DONE = 0;
-    private static final int SET_QUEUE_SONG_IDS = 1;
+    private static final int LAUNCH_JUKEBOX = 1;
     private static final String OWN_JUKEBOX = "on_own_jukebox";
 
     public static final String CREATED_OBJECT_ID = "createdObjectId";
@@ -49,7 +51,6 @@ public class JukeboxSavedPlaylists extends ListActivity {
     private List<Integer> mTrackNumbers;
     private List<String> mPlaylistIds;
 
-    private List<String> mPlaylistTracks;
     private String mJukeboxName;
     private String mJukeboxId;
     private List<String> mJukeboxSongQueue;
@@ -64,8 +65,8 @@ public class JukeboxSavedPlaylists extends ListActivity {
                 case GET_TRACK_PLAYLIST_DONE:
                     setPlaylistTracks((List<String>) msg.obj);
                     return true;
-                case SET_QUEUE_SONG_IDS:
-                    setQueueSongIds();
+                case LAUNCH_JUKEBOX:
+                    launchPlaylistActivity();
             }
             return false;
         }
@@ -73,19 +74,32 @@ public class JukeboxSavedPlaylists extends ListActivity {
 
     private void setPlaylistTracks(List<String> songIds)
     {
-        mPlaylistTracks = songIds;
-        mHandler.sendEmptyMessage(SET_QUEUE_SONG_IDS);
-    }
+        mJukeboxSongQueue = new ArrayList<String>(songIds);
 
-    private void setQueueSongIds()
-    {
-        if(DEBUG)
-            Log.d(TAG, "setQueueSongIds **  ");
+        String id = mJukebox.getObjectID();
+        String name = mJukebox.getName();
 
-        mJukebox.setQueueSongIds(mPlaylistTracks);
-        mJukebox.setDefaultQueueSongIds(mPlaylistTracks);
-        mJukeboxSongQueue = new ArrayList<String>(mPlaylistTracks);
-        launchPlaylistActivity();
+        Log.d(TAG, "setPlayListTracks ------ >  " + "  name: " + name + "  id: " + id);
+        for(String song: songIds){
+            Log.d(TAG, song);
+        }
+
+        ParseObject jukebox = ParseObject.createWithoutData("JukeBox", id);
+        jukebox.put("queueSongIDs", songIds);
+        jukebox.put("defaultQueueSongIDs", songIds);
+        jukebox.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if(e == null){
+                    Log.d(TAG, "Succeeded saving all songs in the jukebox object.");
+                    mHandler.sendEmptyMessage(LAUNCH_JUKEBOX);
+                }
+                else {
+                    Log.e(TAG, "ERROR: Songs not saved in Jukebox..");
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
@@ -107,7 +121,7 @@ public class JukeboxSavedPlaylists extends ListActivity {
         mTrackNumbers = intent.getIntegerArrayListExtra(PLAYLIST_TRACK_NUMBERS);
         mCurrentUserId = intent.getStringExtra(CURRENT_SPOTIFY_USER);
 
-        Log.d(TAG, "OBJECT ID RECIEVED IN SAVED PLAYLISTS -- " + mCreatedObjectId + "  user: " +  mCurrentUserId);
+        Log.d(TAG, "OBJECT ID RECEIVED IN SAVED PLAYLISTS -- " + mCreatedObjectId + " user: " +  mCurrentUserId);
 
         displayPlaylists(mPlaylistNames);
     }
@@ -115,7 +129,7 @@ public class JukeboxSavedPlaylists extends ListActivity {
     private void launchPlaylistActivity()
     {
         if(DEBUG)
-            Log.d(TAG, "launchPlaylistActivity");
+            Log.d(TAG, "launchPlaylistActivity **  " + " -- " + mJukebox.getObjectID());
 
         Intent songListIntent = new Intent(getApplicationContext(),JukeboxPlaylistActivity.class);
         songListIntent.putExtra("JUKEBOXID", mJukeboxId);
@@ -243,9 +257,6 @@ public class JukeboxSavedPlaylists extends ListActivity {
 
     private void displayPlaylists(List<String> list)
     {
-        //java.lang.RuntimeException: Your content must have a ListView whose id attribute is 'android.R.id.list'
-        //ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list);
-
         SavedPlayListAdapter sAdapter = new SavedPlayListAdapter(this, list, mTrackNumbers);
 
         //Get adapter view from layout

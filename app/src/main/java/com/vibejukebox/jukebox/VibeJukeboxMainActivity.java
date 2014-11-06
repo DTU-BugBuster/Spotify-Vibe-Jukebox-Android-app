@@ -7,13 +7,18 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,12 +40,12 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.parse.FindCallback;
 import com.parse.GetCallback;
-import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
+import com.spotify.sdk.android.playback.Connectivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,9 +56,11 @@ public class VibeJukeboxMainActivity extends Activity implements
 	GooglePlayServicesClient.ConnectionCallbacks,
 	GooglePlayServicesClient.OnConnectionFailedListener
 {
+
+    /** ----------------------    Fiels -----------------------------------*/
 	private static final String TAG = VibeJukeboxMainActivity.class.getSimpleName();
-	private static final boolean DEBUG = false;
-	private static final String NEW_JUEKBOX_NAME = "MyJukebox";
+	private static final boolean DEBUG = DebugLog.DEBUG;
+	private static final String NEW_JUKEBOX_NAME = "MyJukebox";
 
     private static final int OBJECT_CREATED = 0;
     private static final int LOAD_CREATED_JUKEBOX = 1;
@@ -67,7 +74,8 @@ public class VibeJukeboxMainActivity extends Activity implements
     private static final String OWN_JUKEBOX = "on_own_jukebox";
 
 	private String mUrl = null;
-	
+
+    /** ----------------------    Connection and Location Services-----------------------------------*/
 	//Define request code to send to Google Play Service
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	
@@ -79,15 +87,19 @@ public class VibeJukeboxMainActivity extends Activity implements
 		
 	private static final long UPDATE_INTERVAL_IN_MILLISECONDS = MILLISECONDS_PER_SECOND
 			      * UPDATE_INTERVAL_IN_SECONDS;
-	
-	// A fast interval ceiling
-	private static final int FAST_CEILING_IN_SECONDS = 1;
 
-	private Location mLastLocation = null;
-	private LocationClient mlocationClient;
-	private LocationRequest mLocationRequest;
-	
-	private boolean mLocationServicesConnected = false;
+    // A fast interval ceiling
+    private static final int FAST_CEILING_IN_SECONDS = 1;
+
+    private boolean mLocationServicesConnected = false;
+    private Location mLastLocation = null;
+    private LocationClient mlocationClient;
+    private LocationRequest mLocationRequest;
+
+    //Broadcast receiver to get notifications from the system about the current network state
+    private BroadcastReceiver mNetworkReceiver;
+
+    /** ----------------------------    Parse Jukebox  -----------------------------------*/
 	private List<JukeboxObject> mJukeboxObjectList;
 	private int mNumberOfNearbyJukeboxesfound = 0;
 	private ArrayList<String> mNearbyJukeboxes = null;
@@ -183,31 +195,15 @@ public class VibeJukeboxMainActivity extends Activity implements
         return objectId;
     }
 
-    public void initializeParseLibrary()
-    {
-        //Parse.enableLocalDatastore(getApplicationContext());
-        //Parse API - set application id and client id
-        //Parse.initialize(this, "L6g7AozXjr5TQ06YtuTXjSs15NZwfYiRnDnaeAn9", "huqTuw04XCuGe3rxVlkhvkD2PH805UemWkUVoYNM");
-
-        //Dev version
-        Parse.initialize(this, "wNcvL6UuEqiUtNZ3TBzCioO6jvzRqbbt0JZXyS7f", "AguDQ6lKwJtWTeoTl6zE75dy2FFki00NtMNfGyX9");
-    }
-
     //--------------------------------------------------------------------------------------
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		if(DEBUG)
-			Log.d(TAG, "onCreate()");
-        String classPATH = System.getProperty("java.classpath");
+            Log.d(TAG, "onCreate()");
 
-        Log.d(TAG, "CLASSPATH:  " + classPATH);
-        initializeParseLibrary();
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_jukebox_main);
-
-        //TODO: Temporaray - REMOVE after
-        //storeCreatedJukeboxId(null);
 
  		setJukeboxList(null);
         setUpLocationServices();
@@ -240,6 +236,18 @@ public class VibeJukeboxMainActivity extends Activity implements
 		if(DEBUG)
 			Log.d(TAG, "onResume -- ");
 
+        //Broadcast receiver for network events.
+        mNetworkReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Connectivity connectivity = getNetworkConnectivity(getBaseContext());
+                Log.d(TAG, " ------------------- NETWORK STATE RECEIVED ----------------   " + connectivity.toString());
+            }
+        };
+
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mNetworkReceiver, filter);
+
         Button createButton = (Button)findViewById(R.id.createJukeboxButton);
         if(retrieveCreatedJukeboxId() != null) {
             Log.e(TAG, "RETRIEVING ID --->>>>>  " + retrieveCreatedJukeboxId());
@@ -252,11 +260,28 @@ public class VibeJukeboxMainActivity extends Activity implements
 			fetchNearbyJukeboxes();
 	}
 
+    private Connectivity getNetworkConnectivity(Context context)
+    {
+        if(DEBUG)
+            Log.d(TAG, "getNetworkConnectivity -- ");
+
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+
+        if(activeNetwork != null){
+            return Connectivity.fromNetworkType(activeNetwork.getType());
+        }
+        else{
+            return Connectivity.OFFLINE;
+        }
+    }
+
     @Override
     protected void onRestart() {
         super.onRestart();
-
-        Log.d(TAG, "onRestart -- ");
+        if(DEBUG)
+            Log.d(TAG, "onRestart -- ");
     }
 
     @Override
@@ -299,16 +324,6 @@ public class VibeJukeboxMainActivity extends Activity implements
 			Log.d(TAG, "object WAS null ....");
 			mJukeboxObjectList = new ArrayList<JukeboxObject>();
 		}
-		
-		for (JukeboxObject obj : mJukeboxObjectList) {
-			//Log.d(TAG, "ID ----   " + obj.getObjectId());
-		}
-		
-		List<JukeboxObject> listToPass = new ArrayList<JukeboxObject>(mJukeboxObjectList);
-		
-		for (JukeboxObject jukeboxObject : listToPass) {
-			Log.d(TAG, "ID (list to pass )----   " + jukeboxObject.getObjectId());
-		}
 
 		intent.putStringArrayListExtra(NEARBY_JUKEBOX_NAMES, mNearbyJukeboxes);
 		intent.putExtra(LAST_LOCATION, mLastLocation);
@@ -340,20 +355,18 @@ public class VibeJukeboxMainActivity extends Activity implements
         for (Account account : list)
         {
             Log.d(TAG, "ACCOUNT::    " + account.name);
-
             if(account.type.equalsIgnoreCase("com.google"))
             {
                 username = account.name;
                 String[] emailName = username.split("@");
                 mDeviceName = emailName[0];
-                //mDeviceName = "Local-Test";
                 break;
             }
         }
 
         //Default name if no google account is set on the device
         if(mDeviceName == null)
-            mDeviceName = NEW_JUEKBOX_NAME;
+            mDeviceName = NEW_JUKEBOX_NAME;
 
         //Create Parse object
         ParseObject.registerSubclass(JukeboxObject.class);
@@ -367,7 +380,6 @@ public class VibeJukeboxMainActivity extends Activity implements
                     Log.d(TAG, "Success saving object in background ..");
                     String id = jukebox.getObjectId();
                     mCreatedObjectId = id;
-                    String name = jukebox.getName();
                     mHandler.sendEmptyMessage(OBJECT_CREATED);
                 }
                 else{
@@ -443,17 +455,15 @@ public class VibeJukeboxMainActivity extends Activity implements
         if(accessToken != null){
             Log.d(TAG, "TOkEN exists:   " + accessToken);
             intent.setClass(this, StartingPlaylistActivity.class);
-            intent.putExtra(ACCESS_TOKEN, accessToken);
-            intent.putExtra(CREATED_OBJECT_ID, mCreatedObjectId);
         }
         else{
             Log.d(TAG, "TOKEN doesn't exist ...   ");
             // When creating jukebox for the first time, Spotify login is required
             intent.setClass(this, LogInPremiumSpotify.class);
-            intent.putExtra("createdObjectId", mCreatedObjectId);
-            intent.putExtra(ACCESS_TOKEN, accessToken);
         }
 
+        intent.putExtra(ACCESS_TOKEN, accessToken);
+        intent.putExtra(CREATED_OBJECT_ID, mCreatedObjectId);
         startActivity(intent);
     }
 
@@ -529,7 +539,7 @@ public class VibeJukeboxMainActivity extends Activity implements
 		}
 		
 		else {
-            Log.d("TAG", "Didn't find one, launching error Dialog ...");
+            Log.d("TAG", "Didn't find a resolution, launching error Dialog ...");
 			showErrorDialog(connectionResult.getErrorCode());
 		}
 		
@@ -651,7 +661,7 @@ public class VibeJukeboxMainActivity extends Activity implements
 		}
 	}
 	
-	/** Get Nearby jukeboxes  -- Parse ------------------------------------------*/
+	/** Get Nearby jukeboxes  -- Parse -----------------------*/
 	private void fetchNearbyJukeboxes() 
 	{
 		if(DEBUG)

@@ -32,11 +32,9 @@
     <string name="YES">Yes</string>
     <string name="NO">No</string>
     <string name="set_up_list_songs">Set up a list of songs for your jukebox</string>
-    <string name="list_creation_explanation"> </string>
-
+    <string name="list_creation_explanation"></string>
     <string name="jukebox_empty">Jukebox is empty, add songs above. </string>
     <string name="jukebox_add_songs_to_host"> Jukebox ready to start getting songs added! </string>
-
     <string name="nearby_jukeboxes_found"> nearby jukeboxes found... </string>
     <string name="no_nearby_jukeboxes_found"> No nearby jukeboxes found. </string>
     <string name="loading_dotdotdot"></string>
@@ -46,5 +44,6 @@
     <string name="title_activity_jukebox_user_playlist">JukeboxUserPlaylistActivity</string>
     <string name="empty_title_space">""</string>
     <string name="title_activity_jukebox_saved_playlists">JukeboxSavedPlaylists</string>
+    <string name="title_activity_jukebox_application">JukeboxApplication</string>
 
 </resources>

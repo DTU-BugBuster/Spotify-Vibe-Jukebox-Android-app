@@ -25,7 +25,9 @@ import android.widget.Toast;
 import com.loopj.android.http.AsyncHttpClient;
 import com.parse.GetCallback;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
 import com.spotify.sdk.android.playback.Player;
@@ -46,27 +48,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class JukeboxPlaylistActivity extends ListActivity implements
         PlayerNotificationCallback, ConnectionStateCallback
 {
     private final String TAG = JukeboxPlaylistActivity.class.getSimpleName();
-    private final boolean DEBUG = false;
+    private final boolean DEBUG = DebugLog.DEBUG;
     private final String DEFAULT_QUEUE_SONG_IDS = "defaultQueueSongIDs";
     private final String QUEUE_SONG_IDS = "queueSongIDs";
     private final String LOOKUP_SPOTIFY_ID = "http://ws.spotify.com/lookup/1/.json?uri="; //TODO: migrate to new Web API
     private static final String OWN_JUKEBOX = "on_own_jukebox";
     private static final int JUKEBOX_OBJECT_SET = 1;
-    private static final int JUKEBOX_OBJECT_NOT_SET = -1;
     private static final int JUKEBOX_SONG_ADDED = 2;
     private static final int JUKEBOX_TRACK_CHANGED = 3;
     private static final int JUKEBOX_FETCH_OBJECT = 4;
-    private static final int JUKEBOX_RESET_OBJECT = 5;
+    private static final int JUKEBOX_RESTART = 5;
     private static final int JUKEBOX_POP_QUEUE_HEAD = 6;
-    private static final int RESET_SKIPPED = 10;
 
     private boolean mIsOwnJukebox = false;
 
@@ -78,15 +76,17 @@ public class JukeboxPlaylistActivity extends ListActivity implements
     private static String mJukeboxName;
     private List<String> mRawSongIDs;
     private List<String> mCurrentlyPlayingSongList;
-    private int mPosition = 0;
 
     private boolean mObjectSet = false;
-    private boolean mTrackChangedInit = true;
+    private boolean mChangeTrack = false;
     private boolean mPlayerInit = false;
     private boolean mIsSkipped = false;
     private boolean mRefreshList = false;
-    private boolean mPopOnly = false;
     private boolean mFetchbeforeInitPlayer = false;
+
+    //TODO: Showing the speaker icon
+    private boolean mCurrentPlayingTrack = false;
+    private boolean mQueueOver = false;
 
     static SongListAdapter mSongListAdapter = null;
 
@@ -104,18 +104,15 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                 case JUKEBOX_OBJECT_SET:
                     Log.d(TAG, "JUKEBOX_OBJECT_SET");
                     mObjectSet = true;
-
                     if(mRefreshList) {
                         refreshListUI();
                     }
 
                     if(mFetchbeforeInitPlayer)
                         initializePlayer();
-
+                    if(mQueueOver)
+                        resetJukebox();
                     return true;
-
-                case JUKEBOX_OBJECT_NOT_SET:
-                    mObjectSet = false;
 
                 case JUKEBOX_FETCH_OBJECT:
                     if(!mObjectSet)
@@ -131,17 +128,25 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                     popLastPlayedSong(mObjectSet);
                     return true;
 
-                case RESET_SKIPPED:
-                    Log.e(TAG, "SKIPPED RESET");
-                    mIsSkipped = false;
-
-                case JUKEBOX_RESET_OBJECT:
-                    fetchJukeboxObject(mRefreshList);
+                case JUKEBOX_RESTART:
+                    restartJukebox(mRawSongIDs.get(0));
+                    return true;
 
             }
             return false;
         }
     });
+
+    private void restartJukebox(String songHead)
+    {
+        if(DEBUG)
+            Log.d(TAG, "restartJukebox -- ");
+
+        if(mPlayerInit) {
+            //mPlayer.pause();
+            mPlayer.play(songHead);
+        }
+    }
 
     @SuppressLint("NewApi")
     @Override
@@ -167,10 +172,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                 mRawSongIDs = new ArrayList<String>();
             }
 
-            for(String song: mCurrentlyPlayingSongList){
-                Log.d(TAG, "Current song:  " + song);
-            }
-
             // TODO: When on a created jukebox, adding songs not supported yet, so hide it
             ActionBar actionBar = getActionBar();
             actionBar.hide();
@@ -181,26 +182,22 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         // Updates UI buttons according if user created or joined a Jukebox
         updateJukeboxButtons(mIsOwnJukebox);
 
-        // TODO: Get Jukebox object from other Activities
-		/*JukeboxObject jObject = (JukeboxObject)getIntent().getParcelableExtra("jukeboxobjectparcelable");
-		String objIDTEMP = jObject.getObjectID();
-		int num = jObject.getQueueSongIds().size();*/
-
-        if(DEBUG){
-            Log.d(TAG, "---------------------------------------------------------------------------------------------------------");
-            //if(objIDTEMP != null && objIDTEMP.equals(mJukeboxID))
-            //Log.d(TAG, "SUCCESS... IDS are the same   " + String.valueOf(num));
-            //else
-            //Log.d(TAG, "SOMETHING's WRONG... " + mJukeboxID + " vs " + objIDTEMP + "  vs  " + String.valueOf(num));
-            setTitle(mJukeboxName);
-
-            Log.d(TAG, "JUKEBOX ID ------------>>>>>>>>>>>  "  + mJukeboxID + " and NAME: " + mJukeboxName);
-        }
-
+        setTitle(mJukeboxName);
         displaySongQueue();
+    }
 
-        // Show the Up button in the action bar.
-        //setupActionBar();
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(DEBUG)
+            Log.d(TAG, "onStart -- ");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(DEBUG)
+            Log.d(TAG, "onResume -- ");
     }
 
     private List<String> getSongQueue()
@@ -216,16 +213,16 @@ public class JukeboxPlaylistActivity extends ListActivity implements
 
     private void setSongQueue(List<String> songQueueIds)
     {
-        for(String song: songQueueIds){
+        /*for(String song: songQueueIds){
             Log.d(TAG, "songssss:   " + song);
-        }
+        }*/
 
-        //mCurrentlyPlayingSongList = new ArrayList<String>(songQueueIds);
+        /*//mCurrentlyPlayingSongList = new ArrayList<String>(songQueueIds);
         if(mJukeboxObject != null) {
             //mJukeboxObject.put("defaultQueueSongIDs", mRawSongIDs);
             //mJukeboxObject.put("queueSongIDs", songQueueIds);
             //mJukeboxObject.saveInBackground();
-        }
+        }*/
 
         if(mPlayerInit)
             mObjectHandler.sendEmptyMessage(JUKEBOX_TRACK_CHANGED);
@@ -294,17 +291,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                 mLoadSongListTask.execute(list);
             }
 
-			/*if(mTrackList != null)
-				mTrackList.clear();
-
-			for(int i = 0;i < list.size(); i++)
-			{
-				Log.e(TAG, "MAIN FOR LOOP iteration :   " + String.valueOf(i));
-				parseTrackIdList(list.get(i));
-			}
-
-			updateTrackList(mTrackList, false);*/
-
             //new LoadJukeboxSongList().execute(list);
             int numSongs = list.size();
             Log.e(TAG, "NUmber of tracks in the jukebox QUEUE ----->   " + String.valueOf(list.size()));
@@ -314,7 +300,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                 return;
             }
         }
-
         else
             Log.e(TAG, "Receiving nothing from intent .... ");
     }
@@ -339,9 +324,7 @@ public class JukeboxPlaylistActivity extends ListActivity implements
             Log.d(TAG, "updateTRACKList --   " + String.valueOf(list.size()));
 
         songListView = getListView();
-        if(songListView == null)
-        {
-            //Log.e(TAG, "LIST IS NULL!!");
+        if(songListView == null){
             return;
         }
 
@@ -350,13 +333,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         for (Track track : list)
         {
             mTrackList.add(track);
-
-            /** DEBUG CODE */
-            String name = track.getName();
-            String artist = track.getArtistName();
-            String songID = track.getHref();
-			/*if(DEBUG)
-				Log.d(TAG, "ARTIST: "  + artist + "     SONG:   " + name + "    songID:    " + songID);*/
         }
 
         mSongListAdapter = new SongListAdapter(this, (ArrayList<Track>)list, showAddSong);
@@ -390,9 +366,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
 
         if(mLoadSongListTask != null)
             mLoadSongListTask.cancel(true);
-
-        if(mJukeboxObject != null)
-            mCurrentlyPlayingSongList = mJukeboxObject.getDefaultQueueSongIds();
     }
 
     @Override
@@ -467,10 +440,9 @@ public class JukeboxPlaylistActivity extends ListActivity implements
             Log.d(TAG, " -- refreshListToPlay -- > number of songs : " + String.valueOf(updatedList.size()));
 
         mCurrentlyPlayingSongList = new ArrayList<String>(updatedList);
-        mTrackChangedInit = true;
+        mChangeTrack = false;
 
-        Log.d(TAG, "Pausing and playing with new *Queue* ");
-        mPlayer.pause();
+        refreshListUI();
         mPlayer.play(updatedList.get(0));
     }
 
@@ -491,7 +463,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                     mPlayerInit = true;
                     mCurrentlyPlayingSongList = new ArrayList<String>(mJukeboxObject.getQueueSongIds());
                     mPlayer.play(mJukeboxObject.getQueueSongIds().get(0));
-                    //mPlayer.play(mRawSongIDs.get(0));
                 }
                 @Override
                 public void onError(Throwable throwable) {
@@ -512,7 +483,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         if(!mPlayerInit){
             mFetchbeforeInitPlayer = true;
             fetchJukeboxObject(false);
-            //initializePlayer();
         }
         else
             playPauseMusic();
@@ -523,8 +493,16 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         if(DEBUG)
             Log.d(TAG, "skipToNext -- (View)");
 
-        if(mPlayer != null)
-            mPlayer.skipToNext();
+        skipSong();
+
+        /*if(mPlayer != null)
+            mPlayer.skipToNext();*/
+    }
+
+    private void skipSong()
+    {
+        mChangeTrack = true;
+        fetchJukeboxAndPopSong(true);
     }
 
     private void popLastPlayedSong(boolean isObjectSet)
@@ -535,14 +513,12 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         if(isObjectSet){
             List<String>currentList = new ArrayList<String>(mJukeboxObject.getQueueSongIds());
             Log.d(TAG, "ORIGINAL currentSize : " + currentList.size());
-
-            mRefreshList = true;
             mObjectSet = false;
 
             Log.d(TAG, "boolean VAR if List is empty:  " + currentList.isEmpty() + "  number of tracks:  " + currentList.size());
             if(currentList.size() > 0){
                 currentList.subList(0,1).clear();
-                mJukeboxObject.setQueueSongIds(currentList);
+                setQueueSongs(mJukeboxID, currentList);
                 if(!currentList.isEmpty())
                     refreshListToPlay(currentList);
                 else
@@ -551,9 +527,30 @@ public class JukeboxPlaylistActivity extends ListActivity implements
             else{
                 resetJukebox();
             }
-
-            //mObjectHandler.sendEmptyMessageDelayed(JUKEBOX_RESET_OBJECT, 500);
         }
+    }
+
+    private void setQueueSongs(String jukeboxId, List<String> songs)
+    {
+        if(DEBUG)
+            Log.d(TAG, "setQueueSongs -- ");
+
+        ParseObject jukebox = ParseObject.createWithoutData("JukeBox", jukeboxId);
+        jukebox.put("queueSongIDs", songs);
+        jukebox.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+               if(e == null){
+                   if(DEBUG)
+                    Log.d(TAG, "Succeeded saving queue songs for active jukebox. ");
+               }
+                else{
+                   Log.e(TAG, "ERROR: failed to save songs .");
+                   if(DEBUG)
+                    e.printStackTrace();
+               }
+            }
+        });
     }
 
     /**
@@ -564,18 +561,29 @@ public class JukeboxPlaylistActivity extends ListActivity implements
     {
         if(DEBUG)
             Log.d(TAG, " -- resetJukebox");
-        //TODO: to fix
 
-        Spotify.destroyPlayer(this);
-        mPlayerInit = false;
         mCurrentlyPlayingSongList = mRawSongIDs;
         mFetchbeforeInitPlayer = false;
+        mChangeTrack = false;
+
+        ParseObject jukebox = ParseObject.createWithoutData("JukeBox", mJukeboxID);
+        jukebox.put("queueSongIDs", mRawSongIDs);
+        jukebox.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if(e == null){
+                    Log.d(TAG, "Successfully reset jukebox to default Queue");
+                    mQueueOver = false;
+                    mObjectHandler.sendEmptyMessage(JUKEBOX_RESTART);
+                }
+                else{
+                    Log.e(TAG, "Failed reset Jukebox ... ");
+                }
+            }
+        });
 
         ImageButton playButton = (ImageButton)findViewById(R.id.playButton);
-        playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_play));
-
-        Toast.makeText(this, getString(R.string.jukebox_add_songs_to_host), Toast.LENGTH_LONG).show();
-        fetchJukeboxObject(true);
+        playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_pause));
     }
 
     private void playPauseMusic()
@@ -598,49 +606,49 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         if(DEBUG)
             Log.d(TAG, "onPlaybackEvent -- ");
 
-        String event = eventType.name().toLowerCase(Locale.ENGLISH).replaceAll("_", " ");
-        Log.e(TAG, "Player Event - " + event);
+        //String event = eventType.name().toLowerCase(Locale.ENGLISH).replaceAll("_", " ");
+        //Log.e(TAG, "Player Event - " + event);
 
-        if(event.equals("became active")){
-            mTrackChangedInit = true;
+        switch (eventType){
+            case BECAME_ACTIVE:
+                Log.e(TAG, "BECAME_ACTIVE");
+                mChangeTrack = false;
+                break;
+
+            case PAUSE:
+                Log.e(TAG, "PAUSE");
+                mChangeTrack = false;
+                break;
+
+            case PLAY:
+                Log.e(TAG, "PLAY");
+                mChangeTrack = false;
+                //refreshListUI();
+                break;
+
+            case TRACK_CHANGED:
+                Log.e(TAG, "TRACK_CHANGED");
+                if(mChangeTrack){
+                    Log.d(TAG, "TRACK CHANGED *tracked* " + mChangeTrack);
+                    fetchJukeboxAndPopSong(true);
+                }
+                mChangeTrack = false;
+                break;
+
+            case END_OF_CONTEXT:
+                //Log.e(TAG, "END_OF_CONTEXT");
+                //End of Jukebox queue, reset playlist to original without added songs
+                //Log.e(TAG, "Current Queue list size  -- >   " + mCurrentlyPlayingSongList.size());
+                if(mCurrentlyPlayingSongList.size() <= 1){
+                    mFetchbeforeInitPlayer = false;
+                    mQueueOver = true;
+                    fetchJukeboxObject(true);
+                    break;
+                }
+                else{
+                    fetchJukeboxAndPopSong(true);
+                }
         }
-
-        else if(event.equals("skip next")){
-            mObjectSet = false;
-            mPopOnly = true;
-            mTrackChangedInit = true;
-            fetchJukeboxObject2(true);
-        }
-
-        else if(event.equals("pause")){
-            mTrackChangedInit = true;
-        }
-
-        else if(event.equals("play")){
-            mTrackChangedInit = true;
-            refreshListUI();
-        }
-
-        else if(event.equals("track changed") && !mTrackChangedInit /*&& !mIsSkipped*/){
-            Log.d(TAG, "TRACK CHANGED *tracked* " + mTrackChangedInit);
-            fetchJukeboxObject2(true);
-
-            //mObjectSet = false;
-            //mPopOnly = true;
-            //fetchJukeboxObject2(true);
-            //popLastPlayedSong(mObjectSet);
-        }
-
-        else if(event.equals("audio flush")){
-            mTrackChangedInit = false;
-        }
-        else if(event.equals("end of context")){
-            //End of Jukebox queue, reset playlist to original without added songs
-            //mCurrentlyPlayingSongList = mJukeboxObject.getDefaultQueueSongIds();
-            //fetchJukeboxObject(true);
-            fetchJukeboxObject2(true);
-        }
-
         mCurrentPlayerState = playerState;
     }
 
@@ -649,6 +657,7 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         if(DEBUG)
             Log.d(TAG, "fetchJukeboxObject **");
 
+        ParseObject.registerSubclass(JukeboxObject.class);
         ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
         query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
             @Override
@@ -657,23 +666,9 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                     Log.d(TAG, "SUCCESS , Object Fetched ");
                     mJukeboxObject = jukeboxObject;
 
-                    //if(!mPopOnly){
-                    //Log.d(TAG, "POP ONLY IS FALSE .. so proceed as usual.");
-                    List<String> currentJukeboxPlaylist = jukeboxObject.getQueueSongIds();
-                    mCurrentlyPlayingSongList = new ArrayList<String>(currentJukeboxPlaylist);
-                    //mTrackChangedInit = false;
-
                     mRefreshList = refreshUiList;
-                    //refreshPlaylist(currentJukeboxPlaylist);
-
                     mObjectHandler.sendEmptyMessage(JUKEBOX_OBJECT_SET);
-                    //}
-                    /*else {
-                        Log.d(TAG, " ********** POPPING ONLY ....");
-                        mObjectHandler.sendEmptyMessage(JUKEBOX_POP_QUEUE_HEAD);
-                    }*/
 
-                    //mObjectHandler.sendMessage(mObjectHandler.obtainMessage(JUKEBOX_OBJECT_SET, currentJukeboxPlaylist));
                 }
                 else
                     Log.e(TAG, "Error fetching jukebox object..");
@@ -681,25 +676,19 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         });
     }
 
-    private void fetchJukeboxObject2(final boolean refreshUiList)
+    private void fetchJukeboxAndPopSong(final boolean refreshUiList)
     {
         if(DEBUG)
-            Log.d(TAG, "fetchJukeboxObject2 **");
+            Log.d(TAG, "fetchJukeboxAndPopSong **");
 
         ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
         query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
             @Override
             public void done(JukeboxObject jukeboxObject, ParseException e) {
                 if(e == null){
-                    Log.d(TAG, "SUCCESS , Object Fetched ");
+                    Log.d(TAG, "SUCCESS , Object Fetched, ready to pop ");
                     mJukeboxObject = jukeboxObject;
-
-                    Log.d(TAG, "POP ONLY IS FALSE .. so proceed as usual.");
-                    List<String> currentJukeboxPlaylist = jukeboxObject.getQueueSongIds();
-                    //mCurrentlyPlayingSongList = new ArrayList<String>(currentJukeboxPlaylist);
-
                     mRefreshList = refreshUiList;
-                    Log.d(TAG, " ********** POPPING ONLY ....");
                     mObjectHandler.sendEmptyMessage(JUKEBOX_POP_QUEUE_HEAD);
 
                 }
@@ -711,33 +700,39 @@ public class JukeboxPlaylistActivity extends ListActivity implements
 
     @Override
     public void onLoggedIn() {
-        Log.d(TAG, "onLoggedIn -- ");
+        if(DEBUG)
+            Log.d(TAG, "onLoggedIn -- ");
     }
 
     @Override
     public void onLoggedOut() {
-        Log.d(TAG, "onLoggedOut -- ");
+        if(DEBUG)
+            Log.d(TAG, "onLoggedOut -- ");
     }
 
     @Override
     public void onLoginFailed(Throwable throwable) {
-        Log.d(TAG, "onLoginFailed -- ");
+        if(DEBUG)
+            Log.d(TAG, "onLoginFailed -- ");
         throwable.printStackTrace();
     }
 
     @Override
     public void onTemporaryError() {
-        Log.d(TAG, "onTemporaryError -- ");
+        if(DEBUG)
+            Log.d(TAG, "onTemporaryError -- ");
     }
 
     @Override
     public void onNewCredentials(String s) {
-        Log.d(TAG, "onNewCredentials -- ");
+        if(DEBUG)
+            Log.d(TAG, "onNewCredentials -- ");
     }
 
     @Override
     public void onConnectionMessage(String message) {
-        Log.d(TAG, "onConnectionMessage -- " + message);
+        if(DEBUG)
+            Log.d(TAG, "onConnectionMessage -- " + message);
     }
 
     /** ----------------------------------------------------------------------LOAD SONGLIST TASK ----------------------------------------------------------------------------*/
@@ -802,7 +797,7 @@ public class JukeboxPlaylistActivity extends ListActivity implements
         private Track parseJsonResponse(InputStream jsonResult)
         {
             //Log.d(TAG, "parseJsonResponse ** ");
-            String line = "";
+            String line;
 
             if(jsonResult == null){
                 Log.e(TAG, "JSON RESULT IS NULL .. exiting." );
@@ -811,7 +806,7 @@ public class JukeboxPlaylistActivity extends ListActivity implements
 
             //TODO: marker of possible error
             BufferedReader reader = new BufferedReader(new InputStreamReader(jsonResult));
-            String trackName = null;
+            String trackName;
             try {
                 line = reader.readLine();
 
@@ -826,11 +821,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
                 mActivity.mTrack.setTrackName(trackName);
                 mActivity.mTrack.setArtistName(artistName);
 
-                //Log.d(TAG, "SONG: " + trackName);
-                //Log.d(TAG, "ARTIST:  " + artistName);
-                //Log.d(TAG, "****************************");
-
-
             } catch (IOException e) {
                 e.printStackTrace();
             } catch(JSONException e){
@@ -842,8 +832,6 @@ public class JukeboxPlaylistActivity extends ListActivity implements
 
         private InputStream retrieveStream(String url)
         {
-            //Log.d(TAG, "retrieveStream() ---* ");
-            //Log.d(TAG, "URL:     "+url);
             DefaultHttpClient client = new DefaultHttpClient();
 
             HttpGet getRequest = new HttpGet(url);
@@ -873,7 +861,8 @@ public class JukeboxPlaylistActivity extends ListActivity implements
      * Set up the {@link android.app.ActionBar}, if the API is available.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void setupActionBar() {
+    private void setupActionBar()
+    {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
@@ -914,116 +903,5 @@ public class JukeboxPlaylistActivity extends ListActivity implements
     {
         Log.e(TAG, "CLICKED on playlist activity");
         super.onListItemClick(l, v, position, id);
-        //playMusic();
     }
 }
-
-
-/*private void changeTrack()
-    {
-        Log.e(TAG, "changeTrack -- ");
-
-        //List<String> currentList = mJukeboxObject.getQueueSongIds();
-        //currentList.subList(0,1).clear();
-        //mJukeboxObject.setQueueSongIds(currentList);
-
-        //mTrackChangedInit = false;
-
-        updateJukeboxQueueInBackend();
-        playUpdatedPlaylist();
-
-        //refreshPlaylist(mCurrentlyPlayingSongList);
-
-        //LAST
-        //Log.d(TAG, "Size of current list -- > " + currentList.size() + "    last list size -- >  " + mCurrentlyPlayingSongList.size());
-        //if(currentList.size() > mCurrentlyPlayingSongList.size()){
-            //Log.d(TAG, "Currently playing list at the time --- >  " + mCurrentlyPlayingSongList.size());
-
-            //mPosition++;
-            //mTrackChangedInit = false;
-            //refreshPlaylist(currentList);
-        //}
-    }*/
-
-/*private void playUpdatedPlaylist()
-    {
-        if(DEBUG)
-            Log.d(TAG, "playUpdatedPlaylist" + String.valueOf(mPosition));
-
-        if(mCurrentPlayerState.playing) {
-            mPlayer.pause();
-        }
-
-        Log.d(TAG, "Playing with position  " + mPosition);
-        mPlayer.play(mCurrentlyPlayingSongList);
-    }
-
-    private void refreshPlaylist(List<String> newList)
-    {
-        Log.d(TAG, "Playlist Refreshed ----- ");
-        //mCurrentlyPlayingSongList = new ArrayList<String>(newList);
-        //playUpdatedPlaylist();
-    }*/
-
-//TODO: REMOVE, notify data set changed
-/*public void insertAddedSongToQueue(int location, List<Track> track)
-	{
-		mTrackList.add(location, track.get(0));
-
-		mSongListAdapter = new SongListAdapter(this, (ArrayList<Track>)mTrackList, false);
-		mSongListAdapter.notifyDataSetChanged();
-		songListView.setAdapter(mSongListAdapter);
-	}*/
-
-/*private void updateJukeboxQueueInBackend()
-    {
-        Log.e(TAG, "updateJukeboxQueueInBackend -- ");
-
-        List<String> currentList = mJukeboxObject.getQueueSongIds();
-        currentList.subList(0,1).clear();
-        mJukeboxObject.setQueueSongIds(currentList);
-        mCurrentlyPlayingSongList = currentList;
-    }*/
-
-/*private void popLastPlayedSong(boolean isObjectSet)
-    {
-        if(DEBUG)
-            Log.d(TAG, "popLastPlayedSong");
-
-        List<String> currentList;
-
-        if(isObjectSet){
-            currentList = new ArrayList<String>(mJukeboxObject.getQueueSongIds());
-            Log.d(TAG, "ORIGINAL currentSize : " + currentList.size());
-
-            currentList.subList(0,1).clear();
-            mJukeboxObject.setQueueSongIds(currentList);
-
-            mRefreshList = true;
-            mObjectSet = false;
-
-            //TODO: DEBUG CODE , to remove
-            Log.d(TAG, "*************************************************************************************************************");
-
-            if(currentList.size() >= mCurrentlyPlayingSongList.size())
-                Log.e(TAG, "NEW UPDATED LIST IS BIGGER THAN CURRENT ONE  .. ");
-            else
-                Log.e(TAG, "NEW UPDATED LIST IS NOT BIGGER THAN CURRENT ONE  .. ");
-
-            for(String fromNewCurrentlist: currentList){
-                Log.d(TAG, "curr:  " + fromNewCurrentlist);
-            }
-
-            for(String fromLast: mCurrentlyPlayingSongList)
-                Log.d(TAG, "last:  " + fromLast);
-            Log.d(TAG, "*************************************************************************************************************");
-
-            //Check to see if a song has been added to the jukebox by another user
-            if(currentList.size() >= mCurrentlyPlayingSongList.size())
-                refreshListToPlay(currentList);
-            else
-                refreshListUI();
-
-            //mObjectHandler.sendEmptyMessageDelayed(JUKEBOX_RESET_OBJECT, 500);
-        }
-    }*/
