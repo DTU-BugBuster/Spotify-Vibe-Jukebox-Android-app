@@ -34,7 +34,7 @@ import java.util.List;
 public class StartingPlaylistActivity extends Activity
 {
     private static final String TAG = StartingPlaylistActivity.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = DebugLog.DEBUG;
     public static final String CREATED_OBJECT_ID = "createdObjectId";
     public static final String CURRENT_SPOTIFY_USER = "spotifyUserID";
     public static final String PLAYLIST_NAMES = "playlistNames";
@@ -45,8 +45,6 @@ public class StartingPlaylistActivity extends Activity
     private List<String> mPlaylistNames;
     private List<String> mPlaylistIds;
     private List<Integer> mPlaylistTrackNumbers;
-
-    private boolean isHttpGood = false;
 
     public static final String TOKEN = "Spotify_access_token";
 
@@ -73,7 +71,7 @@ public class StartingPlaylistActivity extends Activity
     private String mRefreshToken = null;
     static Api api = null;
 
-    private boolean mTokenValid;
+    //private boolean mTokenValid;
 
     //TODO: temp variable
     private JukeboxObject mJukeboxObject;
@@ -177,7 +175,6 @@ public class StartingPlaylistActivity extends Activity
         if(DEBUG)
             Log.d(TAG, "getAccessTokenFromRefresh -- " + refreshToken);
 
-        mTokenValid = false;
         String url = BASE_URL + "api/token";
         String idSecret = CLIENT_ID + ":" + CLIENT_SECRET_ID;
         String header = "Authorization";
@@ -198,11 +195,7 @@ public class StartingPlaylistActivity extends Activity
                 try {
                     mAccessToken = response.getString("access_token");
                     storeNewAccessToken(mAccessToken);
-                    Log.d(TAG, "NEW ACCESS TOKEN SET... ***********");
                     getCurrentSpotifyUser();
-
-                    if (mAccessToken != null)
-                        mTokenValid = true;
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -214,23 +207,16 @@ public class StartingPlaylistActivity extends Activity
                 super.onFailure(statusCode, headers, throwable, errorResponse);
                 Log.d(TAG, "onFailure with JSON object response");
                 throwable.printStackTrace();
-
-                Log.d(TAG, "JSON:  " + errorResponse.toString());
-                Log.d(TAG, "****************************************** MAYBE RE-LOGIN ?");
-                mTokenValid = false;
+                Log.e(TAG, "JSON:  " + errorResponse.toString() + "  Re-login ? ");
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 super.onFailure(statusCode, headers, responseString, throwable);
-                Log.d(TAG, "onFailure -- FAILED getting NEW access token");
-
+                Log.e(TAG, "onFailure -- FAILED getting NEW access token");
                 throwable.printStackTrace();
             }
         });
-
-        Log.d(TAG, "Leaving getAccessTokenFromRefresh ---- ");
-        Log.d(TAG, "Current token ---->   " + mAccessToken);
     }
 
     /**
@@ -241,7 +227,6 @@ public class StartingPlaylistActivity extends Activity
         if(DEBUG)
             Log.d(TAG, "validateAccessToken -- ");
 
-        isHttpGood = false;
         String url = WEB_API_BASE_URL + "v1/me";
         String header = "Authorization";
         String value = "Bearer " + mAccessToken;
@@ -255,11 +240,10 @@ public class StartingPlaylistActivity extends Activity
                 super.onSuccess(statusCode, headers, response);
                 if(DEBUG)
                     Log.d(TAG,"SUCCEEDED call to get current User profile..");
-                isHttpGood = true;
+
                 try{
                     String user = response.getString("id");
                     mCurrentUser = user;
-                    mTokenValid = true;
 
                 } catch(JSONException e){
                     Log.e(TAG, "Exception caught validateAccessToken()");
@@ -273,12 +257,10 @@ public class StartingPlaylistActivity extends Activity
                 if(DEBUG)
                     Log.e(TAG, "Token is expired, must retrieve new one or re-login");
 
-                isHttpGood = true;
                     try{
                         if(errorResponse != null){
                             JSONObject errorObj = errorResponse.getJSONObject("error");
                             String errorCode = errorObj.getString("status");
-                            mTokenValid = false;
 
                             if(DEBUG){
                                 Log.e(TAG, "Error Code:   "+ errorCode);
@@ -294,10 +276,6 @@ public class StartingPlaylistActivity extends Activity
                     }
             }
         });
-
-        //TODO: check better solution
-        /*if(!isHttpGood)
-            startAuthCodeGrant();*/
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------
@@ -311,8 +289,9 @@ public class StartingPlaylistActivity extends Activity
         setTitle(VibeJukeboxMainActivity.getDeviceName());
 
         mCreatedObjectId = getIntent().getStringExtra(CREATED_OBJECT_ID);
-        Log.d(TAG, "Created OBJECT ID received   -- " + mCreatedObjectId);
+        Log.d(TAG, "Created OBJECT ID received from Main Activity  -- " + mCreatedObjectId);
 
+        //Starts Spotify Authorization process
         startAuthFlow();
 	}
 
@@ -351,7 +330,6 @@ public class StartingPlaylistActivity extends Activity
         if(uri != null)
         {
             AuthenticationResponse response = SpotifyAuthentication.parseOauthResponse(uri);
-            Log.d(TAG, "CODE:  " + response.getCode());
             startTask(response.getCode());
         }
         else {
@@ -364,11 +342,12 @@ public class StartingPlaylistActivity extends Activity
     {
         if(DEBUG)
             Log.d(TAG, "createStartingPlaylist -- ");
+
         //TODO: temporary start empty jukebox function
-        startEmptyJukebox();
+        //startEmptyJukebox();
     }
 
-    //TODO: temporary function until implementing backend music recommendation system
+    /*//TODO: temporary function until implementing backend music recommendation system, remove
     private void startEmptyJukebox()
     {
         ParseQuery<JukeboxObject> query = new ParseQuery<JukeboxObject>("JukeBox");
@@ -377,7 +356,7 @@ public class StartingPlaylistActivity extends Activity
             public void done(JukeboxObject jukeboxObject, ParseException e) {
                 if(e == null){
                     mJukeboxObject = jukeboxObject;
-                    mCreatedObjectId = jukeboxObject.getObjectId();
+                    //mCreatedObjectId = jukeboxObject.getObjectId();
                     mHandler.sendEmptyMessage(LAUNCH_EMPTY_JUKEBOX);
                 }
                 else{
@@ -385,7 +364,7 @@ public class StartingPlaylistActivity extends Activity
                 }
             }
         });
-    }
+    }*/
 
     private void launchEmptyJukebox()
     {
@@ -393,7 +372,6 @@ public class StartingPlaylistActivity extends Activity
             Log.d(TAG, "launchEmptyJukebox");
 
         List<String> emptyList = new ArrayList<String>();
-        //emptyList.add("spotify:track:0C2C6KKors52FNdjHAIr4F");
         emptyList.clear();
 
         mJukeboxObject.setDefaultQueueSongIds(emptyList);
@@ -519,17 +497,12 @@ public class StartingPlaylistActivity extends Activity
                 }
 
                 displaySpotifyUserPlaylists();
-                /*for(String playlist: playlistNames)
-                {
-                    //Log.d(TAG, "PLAYLIST:    " + playlist);
-                }*/
-
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 super.onFailure(statusCode, headers, responseString, throwable);
-                Log.d(TAG, "FAILED.... JSON call  ");
+                Log.e(TAG, "Failed JSON call to get User Playlists .... ");
                 throwable.printStackTrace();
             }
         });
@@ -651,8 +624,5 @@ public class StartingPlaylistActivity extends Activity
                 throwable.printStackTrace();
             }
         });
-
-        //WrapperTask task = new WrapperTask(code);
-        //task.execute(getApiObject());
     }
 }
