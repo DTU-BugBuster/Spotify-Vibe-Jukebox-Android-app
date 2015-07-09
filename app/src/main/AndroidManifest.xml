@@ -30,9 +30,10 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".VibeJukeboxMainActivity"
+            android:name=".activities.VibeJukeboxMainActivity"
             android:label="@string/app_name"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@style/VibeTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,28 +41,43 @@
             </intent-filter>
         </activity>
         <activity
+            android:name="com.spotify.sdk.android.authentication.LoginActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
             android:name=".LogInPremiumSpotify"
             android:label="@string/title_activity_log_in_premium_spotify" >
         </activity>
         <activity
-            android:name=".JukeboxListOfJukeboxes"
+            android:name=".activities.JukeboxListOfJukeboxes"
             android:label="@string/title_activity_jukebox_list_of_jukeboxes"
+            android:theme="@style/VibeThemeAlt"
             android:launchMode="singleInstance" >
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.VibeJukeboxMainActivity" />
         </activity>
         <activity
-            android:name=".JukeboxPlaylistActivity"
+            android:name=".activities.JukeboxPlaylistActivity"
             android:label="@string/title_activity_jukebox_playlist"
             android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Holo.Light" >
+            android:theme="@style/VibeTheme"
+            android:parentActivityName=".activities.PlaylistSelectionActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.VibeJukeboxMainActivity" />
         </activity>
         <activity
-            android:name=".MusicSearchActivity"
-            android:label="@string/title_activity_music_search" >
+            android:name=".activities.MusicSearchActivity"
+            android:label="@string/title_activity_music_search"
+            android:theme="@style/VibeTheme">
         </activity>
         <activity
-            android:name=".StartingPlaylistActivity"
+            android:name=".activities.StartingPlaylistActivity"
             android:label="@string/title_activity_starting_playlist"
-            android:launchMode="singleInstance" >
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.Holo.Light" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -74,14 +90,36 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".JukeboxUserPlaylistActivity"
-            android:label="@string/title_activity_jukebox_user_playlist"
-            android:theme="@style/AppTheme" >
+            android:name=".activities.JukeboxSavedPlaylists"
+            android:launchMode="singleInstance"
+            android:theme="@style/VibeThemeAlt" >
         </activity>
         <activity
-            android:name=".JukeboxSavedPlaylists"
-            android:label="@string/title_activity_jukebox_saved_playlists"
-            android:launchMode="singleInstance" >
+            android:name=".activities.PlaylistSelectionActivity"
+            android:label="@string/title_activity_playlist_selection"
+            android:theme="@style/VibeThemeAlt"
+            android:parentActivityName=".activities.VibeJukeboxMainActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.VibeJukeboxMainActivity" />
+        </activity>
+
+        <service
+            android:name=".service.VibeService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+
+        <activity
+            android:name=".activities.MusicParameterActivty"
+            android:label="@string/title_activity_music_parameter_activty"
+            android:theme="@style/VibeThemeAlt"
+            android:parentActivityName=".activities.PlaylistSelectionActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.PlaylistSelectionActivity" />
         </activity>
     </application>
 

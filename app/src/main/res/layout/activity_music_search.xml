@@ -2,37 +2,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MusicSearchActivity" >
+    android:paddingRight="10dp"
+    android:paddingLeft="10dp"
+    tools:context=".MusicSearchActivity"
+    android:background="@color/vibe_dark" >
 
-    <TextView 
-        android:id="@+id/Choose_song"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/Search_track" 
-        android:gravity="center" />  
-        
     <EditText
         android:id="@+id/Search_Music"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" 
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:hint="@string/Enter_A_SONG"
-        android:layout_below="@id/Choose_song" />
+        android:textColorHint="@color/vibe_gray"
+        android:textColor="@color/vibe_white" />
     
     <Button 
         android:id="@+id/Search_Button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="300dp"
+        android:layout_height="70dp"
 		android:layout_below="@id/Search_Music"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/shape"
 		android:text="@string/Search_button_text"
+        android:textColor="@color/vibe_border"
 		android:onClick="searchMusic" />
-    
+
+    <TextView
+        android:id="@+id/musicFromText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/VIBE_APP_MUSIC_FROM"
+        android:textColor="@color/vibe_white"
+        android:layout_above="@+id/musicFromSpotifyLogo"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="70dp"
+        android:src="@drawable/spotify_logo_white_med"
+        android:id="@+id/musicFromSpotifyLogo"
+        android:layout_marginBottom="10dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
     <ListView 
         android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:dividerHeight="0.1dp"
         android:layout_below="@id/Search_Button"
-        android:divider="#00CCCC" >
+        android:layout_above="@id/musicFromText"
+        android:layout_marginTop="5dp"
+        android:divider="#00CCCC"
+        android:visibility="gone" >
     </ListView>
-    
 </RelativeLayout>
