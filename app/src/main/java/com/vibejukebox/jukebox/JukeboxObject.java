@@ -18,13 +18,15 @@ public class JukeboxObject extends ParseObject implements Parcelable
 {
 	private static final String TAG = JukeboxObject.class.getSimpleName();
 	private static final boolean DEBUG = false;
+
     private static final String QUEUE_SONGS = "queuesongs";
 	
 	private String mName;
 	private String mObjectID;
-	private List<String> mSongQueue;
-    private List<String> mDefaultSongIDs;
+	private List<String> mQueueSongIDs;
+    private List<String> mDefaultQueueSongIDs;
     private ParseGeoPoint mLocation;
+    private boolean mCurrentlyPlaying;
 
 	public JukeboxObject(){
 	}
@@ -32,11 +34,9 @@ public class JukeboxObject extends ParseObject implements Parcelable
 	private JukeboxObject(Parcel in){
 		mName = in.readString();
 		mObjectID = in.readString();
-		
-		Bundle bundle = new Bundle();
-		bundle = in.readBundle();
-		
-		mSongQueue = bundle.getStringArrayList(QUEUE_SONGS);
+
+		Bundle bundle = in.readBundle();
+        mQueueSongIDs = bundle.getStringArrayList(QUEUE_SONGS);
 	}
 	
 	public String getName()
@@ -80,8 +80,11 @@ public class JukeboxObject extends ParseObject implements Parcelable
 	
 	public void setQueueSongIds(List<String> ids)
 	{
-		mSongQueue = new ArrayList<String>(ids);
-        put("queueSongIDs", mSongQueue);
+        if(DEBUG)
+            Log.d(TAG, "Saving Queue songs in background");
+
+        mQueueSongIDs = new ArrayList<>(ids);
+        put("queueSongIDs", mQueueSongIDs);
         saveInBackground();
 	}
 
@@ -90,7 +93,7 @@ public class JukeboxObject extends ParseObject implements Parcelable
         if(DEBUG)
             Log.e(TAG, "getDefaultQueueSongIds -");
 
-        ArrayList<String> songQueue = (ArrayList<String>) get("queueDefaultSongIDs");
+        List<String> songQueue = (ArrayList<String>) get("defaultQueueSongIDs");
         if(songQueue == null)
             return Collections.<String>emptyList();
         else
@@ -99,8 +102,8 @@ public class JukeboxObject extends ParseObject implements Parcelable
 
     public void setDefaultQueueSongIds(List<String> ids)
     {
-        mDefaultSongIDs = new ArrayList<String>(ids);
-        put("defaultQueueSongIDs", mDefaultSongIDs);
+        mDefaultQueueSongIDs = new ArrayList<String>(ids);
+        put("defaultQueueSongIDs", mDefaultQueueSongIDs);
         saveInBackground();
     }
 
@@ -129,7 +132,7 @@ public class JukeboxObject extends ParseObject implements Parcelable
 		dest.writeString(mName);
 		dest.writeString(mObjectID);
 		Bundle bundle = new Bundle();
-		bundle.putStringArrayList(QUEUE_SONGS, (ArrayList<String>)mSongQueue);
+		bundle.putStringArrayList(QUEUE_SONGS, (ArrayList<String>)mQueueSongIDs);
 		dest.writeBundle(bundle);
 	}
 }

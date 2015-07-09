@@ -1,10 +1,13 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.vibejukebox.jukebox.JukeboxPlaylistActivity" >
+    tools:context="com.vibejukebox.jukebox.activities.JukeboxPlaylistActivity" >
 
-    <item android:id="@+id/addSongFromSpotify"
+    <item
+        android:id="@+id/addSongFromSpotify"
         android:title="@string/empty_title_space"
         android:orderInCategory="100"
-        android:icon="@drawable/ic_action_add_to_queue"
-        android:showAsAction="ifRoom" />
+        android:icon="@drawable/ic_playlist_add_white_36dp"
+        app:showAsAction="ifRoom"/>
 </menu>

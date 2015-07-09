@@ -5,68 +5,53 @@ import android.os.Parcelable;
 
 public class Track implements Parcelable 
 {
-	public Track(String artist, String song)
+	private String artistName;
+	private String trackName;
+	private String trackUri;
+
+    public Track(){
+
+    }
+
+	public Track(String artist, String trackName)
 	{
-		artistName = artist;
-		name = song;
+		this.artistName = artist;
+		this.trackName = trackName;
 	}
 	
-	public Track(String artist, String song, String songId)
+	public Track(String artist, String trackName, String trackUri)
 	{
-		artistName = artist;
-		name = song;
-		href = songId;
+		this.artistName = artist;
+		this.trackName = trackName;
+		this.trackUri = trackUri;
 	}
-	
-	private String name;
-	public String getName(){
-		return this.name;
+
+	public String getTrackName(){
+		return this.trackName;
 	}
 	
 	public void setTrackName(String trackName)
 	{
-		trackName = name;
-	}
-	
-	private float popularity;
-	public float getPopularity()
-    {
-		return this.popularity;
-	}
-	
-	private long length;
-	public long getLength()
-    {
-		return this.length;
-	}
-	
-	private String href;
-	public String getHref()
-    {
-		return this.href;
-	}
-	
-	public void setHref(String id)
-    {
-		href = id;
+		this.trackName = trackName;
 	}
 
-	public String artistName;
 	public String getArtistName()
 	{
-		return artistName;
+		return this.artistName;
 	}
 
 	public void setArtistName(String artistName)
 	{
 		this.artistName = artistName; 
 	}
-	
-	private String trackNumber;
-	public String getTrackNumber()
-    {
-		return this.trackNumber;
-	}
+
+    public String getTrackUri(){
+        return this.trackUri;
+    }
+
+    public void setTrackUri(String trackUri){
+        this.trackUri = trackUri;
+    }
 
 	@Override
 	public int describeContents() {
@@ -77,8 +62,8 @@ public class Track implements Parcelable
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(artistName);
-		dest.writeString(name);
-		dest.writeString(href);
+		dest.writeString(trackName);
+		dest.writeString(trackUri);
 	}
 	
 	public static final Parcelable.Creator<Track> CREATOR = new Parcelable.Creator<Track>() 
@@ -97,8 +82,8 @@ public class Track implements Parcelable
 	private Track(Parcel in)
 	{
 		artistName = in.readString();
-		name = in.readString();
-		href = in.readString();
+		trackName = in.readString();
+		trackUri = in.readString();
 	}
 }
 

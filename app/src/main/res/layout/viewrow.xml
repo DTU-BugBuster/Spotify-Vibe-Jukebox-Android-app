@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+	android:padding="10dp">
     
-    <LinearLayout 
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/artistSongQueryLayout"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical" >
         
         <TextView 
         android:id="@+id/songName"
         android:layout_width="wrap_content"
-    	android:layout_height="wrap_content" 
-    	android:textSize="20sp" />
+    	android:layout_height="wrap_content"
+    	android:textSize="20sp"
+        android:text="@string/artistCover"/>
 
-		<TextView 
+		<TextView
 	    android:id="@+id/artistName"
     	android:layout_width="wrap_content"
     	android:layout_height="wrap_content"
@@ -28,21 +32,24 @@
         android:contentDescription="@string/image_desc"
         android:layout_width="22dp"
      	android:layout_height="22dp"
-     	android:layout_alignParentRight="true"
-     	android:layout_centerVertical="true"
-     	android:layout_marginLeft="4dp"
-     	android:layout_marginRight="10dp"
-     	android:src="@drawable/circle_plus" /> 
-     	
-     	<ImageView 
+     	android:src="@drawable/ic_add_white_36dp"
+        android:layout_marginTop="15dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp" />
+
+	<ImageView
         android:id="@+id/speaker_icon_playing_track"
         android:contentDescription="@string/image_desc"
         android:layout_width="22dp"
      	android:layout_height="22dp"
-     	android:layout_alignParentRight="true"
-     	android:layout_centerVertical="true"
-     	android:layout_marginLeft="3dp"
-     	android:layout_marginRight="10dp"
-     	android:src="@drawable/speaker" />
-         
+        android:src="@drawable/speaker"
+        android:layout_alignTop="@+id/artistSongQueryLayout"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp"
+        android:visibility="gone"/>
+
 </RelativeLayout>

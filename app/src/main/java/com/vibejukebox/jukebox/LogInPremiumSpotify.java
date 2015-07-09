@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.vibejukebox.jukebox.activities.StartingPlaylistActivity;
+
 
 public class LogInPremiumSpotify extends Activity
 {
