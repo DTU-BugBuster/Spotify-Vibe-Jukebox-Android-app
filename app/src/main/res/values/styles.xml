@@ -17,4 +17,76 @@
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
 
+    <!-- Vibe App theme. -->
+    <style name="VibeTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        !-- Customize your theme here. -->
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@android:color/transparent</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/vibe_green_blue</item>
+
+        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <!--   Navigation icon on the Toolbar to open sliding drawer  -->
+        <item name="navigationIcon">@drawable/ic_menu_white_24dp</item>
+        <!-- You can also set colorControlNormal, colorControlActivated
+            colorControlHighlight and colorSwitchThumbNormal. -->
+    </style>
+
+    <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@android:color/white</item>
+    </style>
+
+    <!-- Vibe App theme. -->
+    <style name="VibeThemeAlt" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        !-- Customize your theme here. -->
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@android:color/transparent</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/vibe_green_blue</item>
+        <!-- You can also set colorControlNormal, colorControlActivated
+            colorControlHighlight and colorSwitchThumbNormal. -->
+        <item name="android:seekBarStyle">@style/SeekBarAppTheme</item>
+    </style>
+
+    <style name="SeekBarAppTheme" parent="android:Widget.Holo.SeekBar">
+        <item name="android:minHeight">4dip</item>
+        <item name="android:maxHeight">4dip</item>
+        <item name="android:thumbOffset">16dip</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+    </style>
+
+    <!-- Test theme. -->
+    <style name="TestTheme" parent="Theme.AppCompat">
+        <!--If you are using revision 22.1 please use just windowNoTitle. Without android:-->
+        <item name="android:windowNoTitle">true</item>
+        <!--We will be using the toolbar so no need to show ActionBar-->
+        <item name="android:windowActionBar">false</item>
+        <!-- Set theme colors from http://www.google.com/design/spec/style/color.html#color-color-palette-->
+        <!-- colorPrimary is used for the default action bar background -->
+        <item name="colorPrimary">@android:color/black</item>
+        <!-- colorPrimaryDark is used for the status bar -->
+        <item name="colorPrimaryDark">#1976D2</item>
+        <!-- colorAccent is used as the default value for colorControlActivated
+             which is used to tint widgets -->
+        <item name="colorAccent">#FF4081</item>
+        <!-- You can also set colorControlNormal, colorControlActivated
+            colorControlHighlight and colorSwitchThumbNormal. -->
+    </style>
+
+    <style name="Dark.Overlay" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:background">@color/vibe_orange</item>
+    </style>
+
+    <style name="Dark.Overlay.LightPopup" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:background">@color/vibe_border</item>
+    </style>
+
 </resources>

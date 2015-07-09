@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="white">#FFFFFF</color>
  
 	<color name="sky_blue">#67CFE8</color> 
 	<color name="vibe_blue">#3454E8</color> 
 	<color name="vibe_orange">#FF5F2D</color>
 	<color name="vibe_gray">#414C4F</color>
-	
+	<color name="vibe_gray_divider">#757575</color>
+	<color name="vibe_green_blue">#FF008080</color>
+	<color name="vibe_border">#0383ad</color>
+	<color name="vibe_dark">#212121</color>
+	<color name="vibe_white">#F5F5F5</color>
+	<color name="vibe_dark_blue">#01579B</color>
+	<color name="vibe_blue_grey">#263238</color>
 </resources>
