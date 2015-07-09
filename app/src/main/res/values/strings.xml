@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="app_name">Vibe</string>
+
+    <string name="VIBE_APP_LAUNCH_PLAYLIST">Launch</string>
+    <string name="VIBE_APP_START_JUKEBOX">Start Jukebox</string>
+    <string name="VIBE_APP_CREATE_JUKEBOX">Create Jukebox</string>
+    <string name="VIBE_APP_JOIN_JUKEBOX">Join Jukebox</string>
+
+    <string name="VIBE_APP_MY_MUSIC">My Music</string>
+    <string name="VIBE_APP_GET_YOUR_VIBE">Get your Vibe</string>
+    <string name="set_up_list_songs">Get your Vibe</string>
+    <string name="VIBE_APP_ARTIST">Artist</string>
+
+    <string name="VIBE_APP_NAME_YOUR_JUKEBOX">Name your jukebox</string>
+    <string name="VIBE_APP_DONE">Done</string>
+    <string name="VIBE_APP_CANCEL">Cancel</string>
+    <string name="VIBE_APP_NEW_JUKEBOX_NAME">New Jukebox name</string>
+
     <string name="title_activity_jukebox_playlist">Playlist</string>
     <string name="title_activity_jukebox_list">JukeboxListActivity</string>
     <string name="title_activity_music_search">Search</string>
@@ -9,20 +26,14 @@
     <string name="title_activity_log_in_premium">LogInPremiumActivity</string>
     <string name="title_activity_log_in_premium_spotify">Create a Jukebox</string>
     <string name="title_activity_starting_playlist">StartingPlaylistActivity</string>
-    <string name="app_name">Vibe</string>
+
     <string name="action_settings">Settings</string>
-    <string name="to_log_in_spotify">To create a jukebox, you must log in to Spotify. Also you must have a premium account.</string>
-    <string name="feature_to_be_added_soon">Coming soon! We will add this feature very soon, in the meantime you can join a jukebox and start adding your music! </string>
-    <string name="log_in_spotify_button">Log in to Spotify</string>
-    <string name="join_button_text">Join</string>
-    <string name="join_by_number">Join a Jukebox by number</string>
-    <string name="create_new_jukebox">Create new Jukebox </string>
-    <string name="my_created_jukebox">My Created Jukebox </string>
+
     <string name="artistCover">Artist Name </string>
     <string name="Search_track">Search for a track</string>
     <string name="Search_button_text">Search</string>
-    <string name="Join_JukeBox_Button">Join Jukebox</string>
-    <string name="My_Created_Jukebox_Button">My Created Jukebox </string>
+
+
     <string name="Enter_A_SONG">Enter a song or artist </string>
     <string name="Choose_music_source">Choose source </string>
     <string name="PROGRESS_DIALOG_TITLE">Loading ...</string>
@@ -31,19 +42,59 @@
     <string name="ADD_SONG_TO_QUEUE">Add song?</string>
     <string name="YES">Yes</string>
     <string name="NO">No</string>
-    <string name="set_up_list_songs">Set up a list of songs for your jukebox</string>
-    <string name="list_creation_explanation"></string>
+
+
     <string name="jukebox_empty">Jukebox is empty, add songs above. </string>
     <string name="jukebox_add_songs_to_host"> Jukebox ready to start getting songs added! </string>
     <string name="nearby_jukeboxes_found"> nearby jukeboxes found... </string>
     <string name="no_nearby_jukeboxes_found"> No nearby jukeboxes found. </string>
-    <string name="loading_dotdotdot"></string>
-    <string name="create_playlist_for_me">Create empty jukebox</string>
-    <string name="select_starting_playlist">Select starting playlist</string>
+
+    <!-- Activity Titles -->
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_jukebox_user_playlist">JukeboxUserPlaylistActivity</string>
-    <string name="empty_title_space">""</string>
-    <string name="title_activity_jukebox_saved_playlists">JukeboxSavedPlaylists</string>
+    <string name="empty_title_space">"TITLE"</string>
+    <string name="title_activity_jukebox_saved_playlists"> Playlists</string>
     <string name="title_activity_jukebox_application">JukeboxApplication</string>
+    <string name="title_activity_music_parameter_activty">Parameters</string>
+
+    <string name="create_playlist_for_me">Based on Favorites</string>
+    <string name="list_creation_explanation"> Create a playlist based on an artist or your music.</string>
+    <string name="VIBE_APP_CREATE_FROM_OWN_MUSIC"> Or create from your own music... </string>
+    <string name="VIBE_APP_ARTIST_RADIO">Artist Radio </string>
+    <string name="VIBE_APP_CONTINUE_PREVIOUS_JUKEBOX">Last Jukebox</string>
+
+    <string name="title_activity_playlist_selection">PlaylistSelectionActivity</string>
+    <string name="VIBE_APP_START_APP_WITH_SPOTIFY">Start with Spotify</string>
+
+    <string name="VIBE_APP_HOTTTNESS_TEXT">Hotttnesss</string>
+    <string name="VIBE_APP_ENERGY_TEXT">Energy</string>
+    <string name="VIBE_APP_ACOUSTICNESS_TEXT">Acousticness</string>
+    <string name="VIBE_APP_DANCEABILITY_TEXT">Danceability</string>
+    <string name="VIBE_APP_ZERO_PARAM">0</string>
+
+    <string name="VIBE_APP_MUSIC_FROM">Music from</string>
+    <string name="VIBE_APP_REFRESH_LIST">Refresh</string>
+
+    <!-- Drawer UI items -->
+    <string name="VIBE_APP_DRAWER_ADD_SONG_ITEM">Add a song</string>
+    <string name="VIBE_APP_DRAWER_CHANGE_PLAYLIST_NAME_ITEM">Change playlist name</string>
+    <string name="VIBE_APP_DRAWER_CREATE_NEW_PLAYLIST_ITEM">Create a new playlist</string>
+    <string name="VIBE_APP_ITEM">Vibe Item</string>
+    <string name="VIBE_APP_ITEM1">Vibe Item1</string>
+    <string name="VIBE_APP_ITEM2">Vibe Item2</string>
+
+    <string name="VIBE_APP_POOR_CONNECTION_MESSAGE">Poor Connection please check your network connection and try again</string>
+
+    <!-- Possible deprecated strings to delete -->
+    <string name="join_button_text">Join</string>
+    <string name="join_by_number">Join a Jukebox by number</string>
+    <string name="create_new_jukebox">Create new Jukebox </string>
+    <string name="my_created_jukebox">My Created Jukebox </string>
+    <string name="to_log_in_spotify">To create a jukebox, you must log in to Spotify. Also you must have a premium account.</string>
+    <string name="feature_to_be_added_soon">Coming soon! We will add this feature very soon, in the meantime you can join a jukebox and start adding your music! </string>
+    <string name="log_in_spotify_button">Log in to Spotify</string>
+    <string name="My_Created_Jukebox_Button">My Created Jukebox </string>
+    <string name="Join_JukeBox_Button">Join Jukebox</string>
+    <string name="select_starting_playlist">Select starting playlist</string>
 
 </resources>

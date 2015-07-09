@@ -28,7 +28,7 @@
         android:minWidth="300dp"
         android:minHeight="45dp"
         android:text="@string/log_in_spotify_button"
-        android:textColor="@color/white" 
+        android:textColor="@android:color/white"
         android:onClick="logInSpotify"/>
 
 </RelativeLayout>

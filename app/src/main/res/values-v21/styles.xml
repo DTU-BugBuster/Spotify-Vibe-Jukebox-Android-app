@@ -1,0 +1,73 @@
+<resources>
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
+    -->
+
+    <style name="MaterialTheme" parent="@android:style/Theme.Material.Light.DarkActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <!--We will be using the toolbar so no need to show ActionBar-->
+        <item name="android:windowActionBar">false</item>
+        <!-- Set theme colors from http://www.google.com/design/spec/style/color.html#color-color-palette-->
+        <!-- colorPrimary is used for the default action bar background -->
+        <item name="android:colorPrimary">#2196F3</item>
+        <!-- colorPrimaryDark is used for the status bar -->
+        <item name="android:colorPrimaryDark">#1976D2</item>
+        <!-- colorAccent is used as the default value for colorControlActivated
+             which is used to tint widgets -->
+        <item name="android:colorAccent">#FF4081</item>
+        <!-- You can also set colorControlNormal, colorControlActivated
+             colorControlHighlight and colorSwitchThumbNormal. -->
+    </style>
+
+    <!--
+        Base application theme for API 21+. This theme replaces
+        MyTheme from resources/values/styles.xml on API 21+ devices.
+    -->
+    <style name="VibeTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@android:color/transparent</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/vibe_border</item>
+        <!--   Navigation icon on the Toolbar to open sliding drawer  -->
+        <item name="navigationIcon">@drawable/ic_menu_white_24dp</item>
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+        <item name="android:windowAllowReturnTransitionOverlap">true</item>
+        <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+        <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+    </style>
+
+    <style name="VibeThemeAlt" parent="Theme.AppCompat.Light.NoActionBar">
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@android:color/transparent</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/vibe_border</item>
+
+        <item name="android:windowContentTransitions">true</item>
+
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+
+        <item name="android:windowAllowReturnTransitionOverlap">true</item>
+
+        <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+
+        <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+
+        <item name="android:seekBarStyle">@style/SeekBarAppTheme</item>
+    </style>
+
+    <style name="SeekBarAppTheme" parent="android:Widget.Material.SeekBar">
+        <item name="android:minHeight">4dip</item>
+        <item name="android:maxHeight">4dip</item>
+        <item name="android:thumbOffset">16dip</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+    </style>
+    
+</resources>

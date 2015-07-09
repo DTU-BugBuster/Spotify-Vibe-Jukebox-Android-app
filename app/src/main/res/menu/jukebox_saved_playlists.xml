@@ -1,8 +1,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.vibejukebox.jukebox.JukeboxSavedPlaylists" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.vibejukebox.jukebox.activities.JukeboxSavedPlaylists" >
+
+    <item android:id="@+id/vibe"
+        android:title="@string/empty_title_space"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:icon="@drawable/vibeappicon"
+        app:showAsAction="ifRoom" />
 </menu>

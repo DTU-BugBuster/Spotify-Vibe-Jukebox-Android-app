@@ -1,34 +1,33 @@
-buildscript {
+/*buildscript {
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.2'
+        classpath 'com.android.tools.build:gradle:1.1.0'
+        classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5'
     }
-}
+}*/
 
 apply plugin: 'com.android.application'
 
-
 android {
-    compileSdkVersion 19
-    buildToolsVersion "20.0.0"
-
+    compileSdkVersion 22
+    buildToolsVersion '22.0.1'
     defaultConfig {
         applicationId "com.vibejukebox.jukebox"
         minSdkVersion 14
-        targetSdkVersion 19
-        versionCode 4
-        versionName "1.3"
+        targetSdkVersion 22
+        versionCode 5
+        versionName "1.4"
     }
     buildTypes {
         release {
-            runProguard false
+            //runProguard false
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
@@ -36,6 +35,8 @@ android {
         exclude 'META-INF/license.txt'
         exclude 'META-INF/notice.txt'
 
+    }
+    productFlavors {
     }
 }
 
@@ -48,27 +49,52 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    //compile files('libs/Parse-1.4.1.jar')
-    //compile 'com.android.support:appcompat-v7:20.0.0'
-    compile 'com.android.support:support-v4:20.0.0'
-    compile 'com.google.android.gms:play-services:5.0.+'
-    compile 'com.loopj.android:android-async-http:1.4.5'
-    compile 'com.spotify.sdk:spotifysdk:1.0.0-beta4@aar'
 
+    //Parse Library for backend
+    compile files('libs/Parse-1.7.0.jar')
 
-    compile "com.google.protobuf:protobuf-java:2.5.0"
-    compile ("net.sf.json-lib:json-lib:2.4:jdk15"){
+    //Handles authentication and authorization for Spotify
+    compile 'com.spotify.sdk:spotify-auth:1.0.0-beta10@aar'
+
+    //Handles music playback using the Spotify Api
+    compile 'com.spotify.sdk:spotify-player:1.0.0-beta10@aar'
+
+    //Spotify Web Api wrapper (Kaaes)
+    compile(name:'spotify-web-api-android-0.1.0', ext:'aar')
+
+    //Dependencies for Android Spotify web Api wrapper
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
+    compile 'com.squareup.okhttp:okhttp:2.2.0'
+
+    //REST
+    compile 'com.google.code.gson:gson:2.3'
+    //compile 'org.parceler:parceler:0.2.13'
+
+    compile 'com.android.support:appcompat-v7:22.1.1'
+    //compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.google.android.gms:play-services:7.0.0'
+    compile 'com.loopj.android:android-async-http:1.4.6'
+
+    //Image URL loading
+    compile 'com.squareup.picasso:picasso:2.5.2'
+
+    //REST services
+    compile 'com.jakewharton:butterknife:6.1.0'
+
+    //compile 'com.google.protobuf:protobuf-java:2.5.0'
+    /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {
         exclude module: 'commons-collections'
-    }
+    }*/
 
-    compile "com.google.guava:guava:18.0"
-    compile "org.mockito:mockito-all:1.8.4"
-    compile "commons-httpclient:commons-httpclient:3.1"
+    //compile 'com.google.guava:guava:18.0'
+    //compile 'org.mockito:mockito-all:1.8.4'
+    //compile 'commons-httpclient:commons-httpclient:3.1'
     //compile ("junit:junit:4.11")
+    //compile 'org.codehaus.groovy:groovy-all:2.3.6'
 }
 
 configurations{
-    all*.exclude group: 'commons-logging', module: 'commons-logging'
+    //all*.exclude group: 'commons-logging', module: 'commons-logging'
     //all*.exclude group: 'commons-collections', module: 'commons-collections'
     //all*.exclude group: 'org.hamcrest', module: 'hamcrest-core'
 }
