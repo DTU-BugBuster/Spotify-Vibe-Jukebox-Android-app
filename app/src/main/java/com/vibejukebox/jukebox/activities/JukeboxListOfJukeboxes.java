@@ -2,13 +2,11 @@ package com.vibejukebox.jukebox.activities;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -22,18 +20,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
@@ -50,8 +36,7 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class JukeboxListOfJukeboxes extends AppCompatActivity implements
-        ConnectionCallbacks, OnConnectionFailedListener, LocationListener
+public class JukeboxListOfJukeboxes extends VibeBaseActivity
 {
 	private static final String TAG = JukeboxListOfJukeboxes.class.getSimpleName();
 	private static final boolean DEBUG = DebugLog.DEBUG;
@@ -62,10 +47,6 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
 	/** Define request code to send to Google Play Service */
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-	private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
-
-    private static final long FAST_UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
-
 	private List<JukeboxObject> mJukeboxes;
 
     private String mJukeboxId;
@@ -73,69 +54,10 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
     /** List of URIs of the chosen playlist to join */
     private List<String> mTrackUriList;
 
-    /** Provides the entry point to Google Play Services */
-    protected GoogleApiClient mGoogleApiClient;
-
-	/** Last known Location */
-    private Location mLastLocation;
-
-	/** Location Request Object */
-	private LocationRequest mLocationRequest;
-
 	private void setJukeboxList(List<JukeboxObject> jukeboxes)
 	{
         mJukeboxes = new ArrayList<>(jukeboxes);
 	}
-	
-	private ParseGeoPoint getGeoPointFromMyLocation(Location location)
-	{
-        if(mGoogleApiClient.isConnected() && location != null)
-            return new ParseGeoPoint(location.getLatitude(), location.getLongitude());
-		else
-			return null;
-	}
-
-    /**
-     * Starts location updates from the FusedLocation API
-     */
-    protected void startLocationUpdates()
-    {
-        //The final argument is a LocationListener
-        LocationServices.FusedLocationApi.
-                    requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-    }
-
-    /**
-     * Removes Location updates from the FusedLocation API
-     */
-    protected void stopLocationUpdates()
-    {
-        //Final argument is a LocationListener
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-    }
-
-    /**
-     * Main entry point for interacting with the fused location provider
-     */
-    protected synchronized void buildGoogleApiClient()
-    {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-    }
-
-    /**
-     * Settings control the accuracy of the current location
-     */
-    protected void createLocationRequest()
-    {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setFastestInterval(FAST_UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -150,7 +72,7 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
         }
     });
 
-	/** ----------------------------------------------------------------------------------------------------------*/
+	/** -----------------------------------------------------------------------------------------*/
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -167,48 +89,8 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
         if(actionBar != null){
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
-        buildGoogleApiClient();
-
-		//Intent intent = getIntent();
-		//mLastLocation = intent.getParcelableExtra("lastlocation");
-	}
-	
-	@Override
-	protected void onStart() {
-		super.onStart();
-		if(DEBUG)
-			Log.d(TAG, "onStart() -- ");
-        mGoogleApiClient.connect();
 	}
 
-	@Override
-	protected void onResume()
-	{
-		super.onResume();
-		if(DEBUG)
-			Log.d(TAG, "onResume -- ");
-        if(mGoogleApiClient.isConnected())
-            startLocationUpdates();
-	}
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(DEBUG)
-            Log.d(TAG, "onPause -- ");
-        if(mGoogleApiClient.isConnected())
-            stopLocationUpdates();
-    }
-
-    @Override
-	protected void onStop() {
-		super.onStop();
-		if(DEBUG)
-			Log.d(TAG, "onStop() -- ");
-        mGoogleApiClient.disconnect();
-	}
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -249,40 +131,30 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
 		}
 	}
 
-    /**
-     * Google Play Services connected callback
-     * @param connectionHint
-     */
     @Override
-    public void onConnected(Bundle connectionHint)
-    {
-        if(DEBUG)
-            Log.d(TAG, "onConnected -- Connection to Location services successful");
+    public void onConnected(Bundle bundle) {
+        super.onConnected(bundle);
 
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        //Calls the function in the base class
         fetchNearbyJukeboxes();
     }
 
+    /**
+     * Implementation of abstract class to handle the nearby jukeboxes found
+     * @param jukeboxList
+     */
     @Override
-    public void onConnectionSuspended(int i)
+    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList)
     {
-        if(DEBUG)
-            Log.d(TAG, "onConnectionSuspended -- ");
-    }
+        setJukeboxList(jukeboxList);
+        List<String> nearbyJukeboxes = new ArrayList<>();
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult)
-    {
-        if(DEBUG)
-            Log.d(TAG, "onConnectionFailed -- ");
-    }
+        for(JukeboxObject jukebox : jukeboxList){
+            nearbyJukeboxes.add(jukebox.getName());
+        }
 
-    @Override
-    public void onLocationChanged(Location location)
-    {
-        if(DEBUG)
-            Log.d(TAG, "onLocationChanged -- ");
-        mLastLocation = location;
+        //Display the list of jukeboxes nearby user
+        updateJukeboxList(nearbyJukeboxes);
     }
 
 	private void showPoorConnectionToast()
@@ -314,7 +186,7 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
 
                 if (DEBUG) {
                     Log.d(TAG, "Retrieved ------- > " + name);
-                    Log.d(TAG, "Object ID ----- " + mJukeboxes.get(position).getObjectId());
+                    Log.i(TAG, "Object ID ----- " + mJukeboxes.get(position).getObjectId());
                 }
 
                 JukeboxObject chosenJukebox = mJukeboxes.get(position);
@@ -381,9 +253,62 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
     }
 
     /**
-     * Fetches nearby jukeboxes within a given range of the user's current location
+     * Launches the Activity that displays the playlist just joined by the user.
+     * @param trackList: List of Track objects currently in the playlist.
      */
-    private void fetchNearbyJukeboxes()
+    private void launchPlaylist(List<Track> trackList)
+    {
+        Intent trackListIntent = new Intent(getApplicationContext(),
+                JukeboxPlaylistActivity.class);
+
+        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
+        trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
+        //trackListIntent.putExtra("joiningJukebox", true);
+        trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
+        trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
+        startActivity(trackListIntent);
+    }
+}
+
+
+/** Provides the entry point to Google Play Services */
+//protected GoogleApiClient mGoogleApiClient;
+
+/** Last known Location */
+//private Location mLastLocation;
+
+/** Location Request Object */
+//private LocationRequest mLocationRequest;
+
+/**
+ * Main entry point for interacting with the fused location provider
+ */
+    /*protected synchronized void buildGoogleApiClient()
+    {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+    }*/
+
+/**
+ * Settings control the accuracy of the current location
+ */
+    /*protected void createLocationRequest()
+    {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
+        mLocationRequest.setFastestInterval(FAST_UPDATE_INTERVAL_IN_MILLISECONDS);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }*/
+
+
+
+/**
+ * Fetches nearby jukeboxes within a given range of the user's current location
+ */
+    /*private void fetchNearbyJukeboxes()
     {
         final List<String> nearbyJukeboxes = new ArrayList<>();
 
@@ -415,22 +340,4 @@ public class JukeboxListOfJukeboxes extends AppCompatActivity implements
                 }
             }
         });
-    }
-
-    /**
-     * Launches the Activity that displays the playlist just joined by the user.
-     * @param trackList: List of Track objects currently in the playlist.
-     */
-    private void launchPlaylist(List<Track> trackList)
-    {
-        Intent trackListIntent = new Intent(getApplicationContext(),
-                JukeboxPlaylistActivity.class);
-
-        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
-        trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
-        //trackListIntent.putExtra("joiningJukebox", true);
-        trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
-        trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
-        startActivity(trackListIntent);
-    }
-}
+    }*/

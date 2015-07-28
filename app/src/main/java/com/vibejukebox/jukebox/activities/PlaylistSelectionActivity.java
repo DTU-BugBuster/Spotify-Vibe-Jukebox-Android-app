@@ -42,21 +42,14 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     private static final String TAG = PlaylistSelectionActivity.class.getSimpleName();
     private static final boolean DEBUG = DebugLog.DEBUG;
 
-    private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
-
     private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
 
-    private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
+    //private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
+
+
+    //private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
 
     private static final String SPOTIFY_API_USER_ID = "userID";
-
-    /** Vibe APP variables */
-    private static final String VIBE_DEFAULT_PLAYLIST_NAME = "MyJukebox";
-
-    /** Spotify Api keys */
-    private static final String SPOTIFY_APP_CLIENT_ID="0cd11be7bf8d4e59a21f5961a7a70723";
-
-    private static final String SPOTIFY_APP_CLIENT_SECRET_ID = "c3850b0507ab4fdea72cd2474cfccc30";
 
     /** Spotify Api objects */
     private SpotifyService mSpotify;
@@ -87,8 +80,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
             Log.d(TAG, "onCreate -- ");
 
         // Get the response to obtain the authorization code
-        mAuthResponse = getIntent().getParcelableExtra("response");
-        mCurrentLocation = getIntent().getParcelableExtra("currentlocation");
+        mAuthResponse = getIntent().getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        mCurrentLocation = getIntent().getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
         mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
 
         if(mJukeboxId != null)
@@ -105,8 +98,16 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        //TODO: Location
         if(mCurrentLocation == null)
             Log.e(TAG, "LOCATION NULL");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if(DEBUG)
+            Log.d(TAG, "onRestart -- ");
     }
 
     @Override
@@ -236,32 +237,36 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
      */
     private void getAndSetCurrentUser()
     {
-        final String accessToken = mAuthResponse.getAccessToken();
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                                    .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
-                                    .setRequestInterceptor(new RequestInterceptor() {
-                                        @Override
-                                        public void intercept(RequestFacade request) {
-                                            request.addHeader("Authorization","Bearer " +accessToken);
-                                        }
-                                    })
-                .build();
+        if(mAuthResponse != null){
+            final String accessToken = mAuthResponse.getAccessToken();
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
+                    .setRequestInterceptor(new RequestInterceptor() {
+                        @Override
+                        public void intercept(RequestFacade request) {
+                            request.addHeader("Authorization","Bearer " +accessToken);
+                        }
+                    })
+                    .build();
 
-        mSpotify = restAdapter.create(SpotifyService.class);
-        mSpotify.getMe(new Callback<UserPrivate>() {
-            @Override
-            public void success(UserPrivate user, Response response) {
-                if (DEBUG)
-                    Log.d(TAG, "Successful call to get current logged in user");
-                mUserId = user.id;
-                Log.d(TAG, "user:  " + user.display_name);
-            }
+            mSpotify = restAdapter.create(SpotifyService.class);
+            mSpotify.getMe(new Callback<UserPrivate>() {
+                @Override
+                public void success(UserPrivate user, Response response) {
+                    if (DEBUG)
+                        Log.d(TAG, "Successful call to get current logged in user");
+                    mUserId = user.id;
+                    Log.d(TAG, "user:  " + user.display_name);
+                }
 
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, "Failed to get current logged in user...");
-            }
-        });
+                @Override
+                public void failure(RetrofitError error) {
+                    Log.e(TAG, "Failed to get current logged in user...");
+                }
+            });
+        } else {
+            Log.e(TAG, "Authentication Response object is NULL.");
+        }
     }
 
     private void setArtistRadioDialog()
@@ -307,9 +312,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     {
         //Start the Music Parameter Activity
         Intent intent = new Intent(this, MusicParameterActivty.class);
-        intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, true);
-        intent.putExtra("playlistName",jukeboxName);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, jukeboxName);
         startActivity(intent);
     }
 

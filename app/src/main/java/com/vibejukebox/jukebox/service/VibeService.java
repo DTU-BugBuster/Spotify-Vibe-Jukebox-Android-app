@@ -4,10 +4,12 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -25,6 +27,7 @@ import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
 import com.vibejukebox.jukebox.activities.JukeboxPlaylistActivity;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +40,20 @@ public class VibeService extends Service {
 
     private static final String VIBE_JUKEBOX_STRING_PREFERENCE = "JukeboxStoredId";
 
+    public static final int VIBE_SERVICE_UPDATE_ALL = 0;
+
+    public static final int VIBE_SERVICE_UPDATE_TITLE = 1;
+
+    public static final int VIBE_SERVICE_UPDATE_LOCATION = 2;
+
+    public static final int VIBE_SERVICE_UPDATE_TRACKS = 3;
+
+    public static final int VIBE_SERVICE_TEST = 4;
+
+    public static final int VIBE_GET_JUKEBOX_FOR_REFRESH = 100;
+
+    //public static final int VIBE_GET_JUKEBOX_FOR_UPDATE = 200;
+
     private List<String> mTrackUris;
 
     private List<Track> mPlaylistTracks;
@@ -47,12 +64,20 @@ public class VibeService extends Service {
 
     private String mPlaylistName;
 
-    private AuthenticationResponse mAuthresponse;
+    private AuthenticationResponse mAuthResponse;
 
     private static final int VIBE_JUKEBOX_OBJECT_CREATION_DONE = 10;
 
-    //Binder passed back to clients
-    private final IBinder mBinder = new VibeBinder();
+    private static final int VIBE_JUKEBOX_REFRESH_TRACK_LIST_UI = 12;
+
+    private static final int VIBE_CREATE_TRACK_FROM_URIS = 20;
+
+    //Messenger (Binder) passed back to clients
+    private Messenger mRequestMessenger = null;
+
+    private Message mRequestMessage = null;
+
+    private boolean mTrackChanged = false;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -62,17 +87,66 @@ public class VibeService extends Service {
                     storeJukeboxID(mJukeboxId);
                     launchActivePlaylist();
                     stopSelf();
+                    return true;
+                case VIBE_JUKEBOX_REFRESH_TRACK_LIST_UI:
+                    sendReplyMessage((List<String>)msg.obj);
+                    return true;
             }
             return false;
         }
     });
 
-    public class VibeBinder extends Binder
+    public static class RequestHandler extends Handler
     {
-        VibeService getService(){
-            //Return the instance of the service
-            return VibeService.this;
+        WeakReference<VibeService> mService;
+
+        public RequestHandler(VibeService service){
+            mService = new WeakReference<>(service);
         }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch(msg.what){
+                case VIBE_GET_JUKEBOX_FOR_REFRESH:
+                    boolean isChangeTrack = msg.getData().getBoolean("trackChanged");
+                    mService.get().mJukeboxId = msg.getData().getString("jukeboxId");
+                    mService.get().setRequestMessage(msg);
+                    mService.get().getJukeboxForRefresh(isChangeTrack);
+                    break;
+
+                case VIBE_SERVICE_UPDATE_TITLE:
+                    mService.get().mPlaylistName = msg.getData().getString("playlistName");
+                    mService.get().getJukeboxForUpdate(VIBE_SERVICE_UPDATE_TITLE);
+                    break;
+            }
+        }
+    }
+
+    private void sendReplyMessage(List<String> trackUris)
+    {
+        if(DEBUG)
+            Log.d(TAG, "sendReplyMessage -- num of songs: " + trackUris.size());
+
+        Bundle data = new Bundle();
+        data.putStringArrayList("list", (ArrayList<String>) trackUris);
+        data.putBoolean("trackChanged", mTrackChanged);
+
+        final Messenger replyMessenger = mRequestMessage.replyTo;
+        Message replyMessage = Message.obtain(null, VIBE_CREATE_TRACK_FROM_URIS);
+        replyMessage.setData(data);
+
+        try {
+            replyMessenger.send(replyMessage);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setRequestMessage(Message msg)
+    {
+        if(DEBUG)
+            Log.d(TAG, "setRequestMessage -- ");
+        mRequestMessage = Message.obtain(msg);
     }
 
     /**
@@ -81,11 +155,14 @@ public class VibeService extends Service {
      */
     private String getCreatedJukeboxId()
     {
-        Log.d(TAG, "getCreatedJukeboxId -- ");
+        if(DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
+
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
 
-        Log.d(TAG, "------------------------------------------- Returning ID from service: " + jukeboxId);
+        if(DEBUG)
+            Log.d(TAG, "----------------------------------- Returning ID from service: " + jukeboxId);
         return jukeboxId;
     }
 
@@ -95,6 +172,8 @@ public class VibeService extends Service {
      */
     private void storeJukeboxID(String id)
     {
+        Log.e(TAG, "STORING (SERVICE):  " + id);
+
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
         SharedPreferences.Editor editor = preferences.edit();
 
@@ -111,23 +190,35 @@ public class VibeService extends Service {
             return null;
         }
     }
-    // ------------------------------------------------------------------------------------------------------
+    /** ------------------------------------------------------------------------------------------------------*/
+
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
+        if(DEBUG)
+            Log.d(TAG, "onCreate -- ");
+
+        //mJukeboxId = getCreatedJukeboxId();
+        mLocation = Vibe.getCurrentLocation();
+        mRequestMessenger = new Messenger(new RequestHandler(this));
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
+        if(DEBUG)
+            Log.d(TAG, "onStartCommand  -- Vibe Service");
+
+        mJukeboxId = intent.getStringExtra(Vibe.VIBE_JUKEBOX_ID);
         mTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
         mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
-        //mLocation = intent.getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
-        mLocation = Vibe.getCurrentLocation();
-        mAuthresponse = intent.getParcelableExtra("authresponse");
-        mJukeboxId = getCreatedJukeboxId();
-
-        mPlaylistName = intent.getStringExtra("playlistname");
+        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
 
         // If the Jukebox ID is not null means the user has already created a jukebox so we reuse it.
         if(mJukeboxId != null)
-            getJukeboxFromBackend(mPlaylistName);
+            getJukeboxForUpdate(VIBE_SERVICE_UPDATE_ALL); //getJukeboxFromBackend(mPlaylistName);
         else
             createJukebox(mPlaylistName);
         return Service.START_NOT_STICKY;
@@ -136,16 +227,21 @@ public class VibeService extends Service {
     @Override
     public IBinder onBind(Intent intent)
     {
-        return mBinder;
+        if(DEBUG)
+            Log.d(TAG, "onBind Vibe Service");
+        return mRequestMessenger.getBinder();
     }
 
     private void launchActivePlaylist()
     {
+        Log.d(TAG, "launchActivePlaylist (Service)");
+
         Intent intent = new Intent(getApplicationContext(), JukeboxPlaylistActivity.class);
-        intent.putExtra("authresponse", mAuthresponse);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
-        intent.putExtra("playlistName", mPlaylistName);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
+        intent.putExtra("storedLocation", mLocation);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mPlaylistTracks);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -153,7 +249,172 @@ public class VibeService extends Service {
         startActivity(intent);
     }
 
-    private void getJukeboxFromBackend(final String playlistName)
+    public void getJukeboxForUpdate(final int mode)
+    {
+        ParseObject.registerSubclass(JukeboxObject.class);
+        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
+        query.getInBackground(mJukeboxId, new GetCallback<JukeboxObject>() {
+            @Override
+            public void done(JukeboxObject jukebox, ParseException e) {
+                if (e == null) {
+                    Log.d(TAG, "Successfully retrieved Jukebox from cloud with ID:  " + mJukeboxId);
+                    switch (mode) {
+                        case VIBE_SERVICE_UPDATE_ALL:
+                            updateJukeboxAll(jukebox);
+                            break;
+                        case VIBE_SERVICE_UPDATE_TITLE:
+                            updateJukeboxTitle(jukebox, mPlaylistName);
+                            break;
+                        case VIBE_SERVICE_UPDATE_LOCATION:
+                            updateJukeboxLocation(jukebox, mLocation);
+                            break;
+                        case VIBE_SERVICE_UPDATE_TRACKS:
+                            updateJukeboxSongLists(jukebox, mTrackUris);
+                            break;
+                    }
+
+                } else {
+                    Log.e(TAG, "Error fetching jukebox object, ID: " + mJukeboxId);
+                    Toast.makeText(getApplicationContext(),
+                            getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
+                            Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void getJukeboxForRefresh(final boolean changeTrack)
+    {
+        if(DEBUG)
+            Log.d(TAG, "getJukeboxForRefresh with ID:  " + mJukeboxId);
+
+        ParseObject.registerSubclass(JukeboxObject.class);
+        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
+        query.getInBackground(mJukeboxId, new GetCallback<JukeboxObject>() {
+            @Override
+            public void done(JukeboxObject jukeboxObject, ParseException e) {
+                if (e == null) {
+                    Log.d(TAG, "Successfully retrieved Jukebox from cloud. ");
+                    List<String> trackURIs = new ArrayList<>(jukeboxObject.getQueueSongIds());
+
+                    mTrackChanged = changeTrack;
+
+                    if(changeTrack ){
+                        //Variable to update music that is playing
+                        trackURIs.subList(0,1).clear();
+
+                        if(trackURIs.size() == 0)
+                            trackURIs = jukeboxObject.getDefaultQueueSongIds();
+
+                        updateJukeboxQueue(jukeboxObject, trackURIs);
+                    }
+
+                    Log.d(TAG, "Done updating Jukebox in cloud ...." + trackURIs.size());
+                    mHandler.sendMessage(mHandler.obtainMessage(VIBE_JUKEBOX_REFRESH_TRACK_LIST_UI, trackURIs));
+                } else {
+                    Log.e(TAG, "Error fetching jukebox object in service.");
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void updateJukeboxAll(JukeboxObject jukebox)
+    {
+        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
+        if(geoPoint == null){
+            Log.e(TAG, "An error occurred getting the current location");
+            return;
+        }
+
+        jukebox.put("name", mPlaylistName);
+        jukebox.put("location", geoPoint);
+        jukebox.put("queueSongIDs", mTrackUris);
+        jukebox.put("defaultQueueSongIDs", mTrackUris);
+        saveInBackground(jukebox);
+        mHandler.sendEmptyMessage(VIBE_JUKEBOX_OBJECT_CREATION_DONE);
+    }
+
+    private void updateJukeboxTitle(JukeboxObject jukebox, String name)
+    {
+        if(DEBUG)
+            Log.d(TAG, "update Jukebox Title in backend");
+
+        jukebox.put("name", name);
+        saveInBackground(jukebox);
+    }
+
+    private void updateJukeboxLocation(JukeboxObject jukebox, Location location )
+    {
+        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
+        if(geoPoint == null){
+            Log.e(TAG, "An error occurred getting the current location");
+            return;
+        }
+
+        jukebox.put("location", geoPoint);
+        saveInBackground(jukebox);
+    }
+
+    private void updateJukeboxSongLists(JukeboxObject jukebox, List<String> trackUris)
+    {
+        jukebox.put("queueSongIDs", trackUris);
+        jukebox.put("defaultQueueSongIDs", trackUris);
+        saveInBackground(jukebox);
+    }
+
+    private void updateJukeboxQueue(JukeboxObject jukebox, List<String> trackUris)
+    {
+        jukebox.put("queueSongIDs", trackUris);
+        saveInBackground(jukebox);
+    }
+
+    private void saveInBackground(JukeboxObject jukebox)
+    {
+        jukebox.saveInBackground();
+    }
+
+    /**
+     * Creates a Jukebox object with a given name
+     * @param playlistName: Name of the playlist to be created
+     */
+    public void createJukebox(String playlistName)
+    {
+        if(DEBUG)
+            Log.d(TAG, "createJukebox -  " + playlistName);
+
+        ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
+        if(geoPoint == null){
+            Log.e(TAG, "An error occurred getting the current location");
+            return;
+        }
+
+        //Create Parse object
+        ParseObject.registerSubclass(JukeboxObject.class);
+        final JukeboxObject jukebox = new JukeboxObject();
+        jukebox.put("name", playlistName);
+        jukebox.put("location", geoPoint);
+        jukebox.put("queueSongIDs", mTrackUris);
+        jukebox.put("defaultQueueSongIDs", mTrackUris);
+        jukebox.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if(e == null){
+                    Log.d(TAG, "Success saving object in background ..");
+                    mJukeboxId = jukebox.getObjectId();
+                    mHandler.sendEmptyMessage(VIBE_JUKEBOX_OBJECT_CREATION_DONE);
+                }
+                else{
+                    Log.e(TAG, "Something went wrong creating new jukebox object in Parse ...");
+                }
+            }
+        });
+    }
+}
+
+/** TO check */
+    /*public void getJukeboxFromBackend(final String playlistName)
     {
 
         if(DEBUG){
@@ -192,44 +453,104 @@ public class VibeService extends Service {
                 }
             }
         });
-    }
+    }*/
 
-    /**
-     * Creates a Jukebox object with a given name
-     * @param playlistName: Name of the playlist to be created
-     */
-    public void createJukebox(String playlistName)
+
+ /*public void testFunction(Message msg)
+    {
+        Log.d(TAG, "TEST Function .....");
+
+        boolean changed = msg.getData().getBoolean("trackChanged");
+
+        Log.d(TAG, "TRACK CHANGED --->  " + changed);
+
+        final Messenger replyMessenger = msg.replyTo;
+        Message replyMessage = Message.obtain(null, VIBE_TEST);
+
+        List<String> list = new ArrayList<>();
+        list.add("One");
+        list.add("Two");
+        list.add("Three");
+
+        Bundle data = new Bundle();
+        data.putStringArrayList("list", (ArrayList<String>)list);
+
+        replyMessage.setData(data);
+
+        try {
+            replyMessenger.send(replyMessage);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }*/
+
+/**
+
+    private void getActiveJukeboxFromCloud(final boolean changeTrack)
     {
         if(DEBUG)
-            Log.d(TAG, "createJukebox -  " + playlistName);
+            Log.d(TAG, "getActiveJukeboxFromCloud with ID:  " + mJukeboxID);
 
-        ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
-        if(geoPoint == null){
-            Log.e(TAG, "An error occurred getting the current location");
-            return;
-        }
-
-        //Create Parse object
         ParseObject.registerSubclass(JukeboxObject.class);
-        final JukeboxObject jukebox = new JukeboxObject();
-        jukebox.put("name", playlistName);
-        jukebox.put("location", geoPoint);
-        jukebox.put("queueSongIDs", mTrackUris);
-        jukebox.put("defaultQueueSongIDs", mTrackUris);
-        jukebox.saveInBackground(new SaveCallback() {
+        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
+        query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
             @Override
-            public void done(ParseException e) {
-                if(e == null){
-                    Log.d(TAG, "Success saving object in background ..");
-                    mJukeboxId = jukebox.getObjectId();
-                    mHandler.sendEmptyMessage(VIBE_JUKEBOX_OBJECT_CREATION_DONE);
-                    //mCreatedObjectId = id;
-                    //mHandler.sendEmptyMessage(OBJECT_CREATED);
-                }
-                else{
-                    Log.e(TAG, "Something went wrong creating new jukebox object ...");
+            public void done(JukeboxObject jukeboxObject, ParseException e) {
+                if (e == null) {
+                    Log.d(TAG, "Successfully retrieved Jukebox from cloud. ");
+                    List<String> trackURIs = new ArrayList<>(jukeboxObject.getQueueSongIds());
+
+                    mChangeTrack = changeTrack;
+
+                    Log.d(TAG, "TRACK LIST SIZE:  " + trackURIs.size());
+                    if(changeTrack ){
+                        //Variable to update music that is playing
+                        trackURIs.subList(0,1).clear();
+
+                        if(trackURIs.size() == 0){
+                            trackURIs = jukeboxObject.getDefaultQueueSongIds();
+                        }
+                        mPlayListTrackUris = new ArrayList<>(trackURIs);
+                        mTrackUriHead = mPlayListTrackUris.get(0);
+                        jukeboxObject.setQueueSongIds(mPlayListTrackUris);
+                    }
+                    mPlaylistHandler.sendMessage(mPlaylistHandler.obtainMessage(VIBE_CREATE_TRACK_FROM_URIS, trackURIs));
+                } else {
+                    Log.e(TAG, "Error fetching jukebox object..");
+                    e.printStackTrace();
                 }
             }
         });
     }
-}
+
+    private void getJukeboxFromBackend(final String playlistName)
+    {
+        ParseObject.registerSubclass(JukeboxObject.class);
+        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
+        query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
+            @Override
+            public void done(JukeboxObject jukebox, ParseException e) {
+                if (e == null) {
+                    Log.d(TAG, "Successfully retrieved Jukebox from cloud with ID:  " + mJukeboxID);
+                    jukebox.put("name", playlistName);
+                    jukebox.saveInBackground();
+
+                    if(getSupportActionBar() != null)
+                        getSupportActionBar().setTitle(playlistName);
+
+                } else {
+                    Log.e(TAG, "Error fetching jukebox object, ID: " + mJukeboxID);
+                    Toast.makeText(getApplicationContext(),
+                            getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
+                            Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+
+ */
+
+
+

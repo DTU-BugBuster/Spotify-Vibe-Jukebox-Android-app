@@ -96,5 +96,6 @@
     <string name="My_Created_Jukebox_Button">My Created Jukebox </string>
     <string name="Join_JukeBox_Button">Join Jukebox</string>
     <string name="select_starting_playlist">Select starting playlist</string>
+    <string name="title_activity_vibe_base">VibeBaseActivity</string>
 
 </resources>
