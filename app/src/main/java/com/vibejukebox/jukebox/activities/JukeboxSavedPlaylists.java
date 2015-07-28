@@ -1,6 +1,5 @@
 package com.vibejukebox.jukebox.activities;
 
-import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -23,6 +22,7 @@ import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
+import com.vibejukebox.jukebox.VibePlaylist;
 import com.vibejukebox.jukebox.service.VibeService;
 import com.vibejukebox.jukebox.adapters.SavedPlayListAdapter;
 
@@ -56,11 +56,8 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
     private static final int VIBE_GET_USER_PLAYLISTS = 20;
 
-    private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
-
-    private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
-
-    private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
+    //private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
+    //private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
 
     private static final String SPOTIFY_API_USER_ID = "userID";
 
@@ -69,6 +66,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     private Map<String, Integer> mNumOfTracks;
 
     private Map<String, String> mPlaylistNamesAndIds;
+
+    //TODO: Implement object.
+    private Map<String, VibePlaylist> mVibePlaylistObject;
+
 
     private AuthenticationResponse mAuthResponse;
 
@@ -100,6 +101,21 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         }
     });
 
+    /**
+     * Retrieves the created jukebox ID from the stored preferences.
+     * @return: Jukebox object ID String.
+     */
+    private String getCreatedJukeboxId()
+    {
+        if(DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
+        Log.d(TAG, "------------------------------------------------------ Returning ID: " +  jukeboxId);
+        return jukeboxId;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -121,11 +137,11 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
         // Spotify API variables
         mUserId = intent.getStringExtra(SPOTIFY_API_USER_ID);
-        mAuthResponse = intent.getParcelableExtra(SPOTIFY_API_AUTH_RESPONSE);
+        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
 
         mPlaylistNamesAndIds = new HashMap<>();
+        mVibePlaylistObject = new HashMap<>();
         mNumOfTracks = new HashMap<>();
-
         getUserPlaylists();
     }
 
@@ -135,21 +151,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         if(DEBUG)
             Log.d(TAG,"onRestart -- ");
         mJukeboxId = getCreatedJukeboxId();
-    }
-
-    /**
-     * Retrieves the created jukebox ID from the stored preferences.
-     * @return: Jukebox object ID String.
-     */
-    private String getCreatedJukeboxId()
-    {
-        if(DEBUG)
-            Log.d(TAG, "getCreatedJukeboxId -- ");
-
-        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
-        String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
-        Log.d(TAG, "----------------------------------------------------------- Returning ID: " +  jukeboxId);
-        return jukeboxId;
     }
 
     @Override
@@ -177,7 +178,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     private void getUserPlaylists()
     {
         if(DEBUG){
-            Log.d(TAG, "getPlaylists1");
+            Log.d(TAG, "getUserPlaylists");
         }
 
         mPlaylistImages = new HashMap<>();
@@ -188,6 +189,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         params.put("limit", 50);
         params.put("offset", 1);
 
+        //TODO: user id value null after a crash
         //Get a List of a User's Playlists Api endpoint
         SpotifyService spotifyService = api.getService();
         spotifyService.getPlaylists(mUserId, params, new Callback<Pager<PlaylistSimple>>() {
@@ -195,9 +197,21 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
             public void success(Pager<PlaylistSimple> playlistSimplePager, Response response) {
                 Log.d(TAG, "Successful call to get User playlists.");
                 for (PlaylistSimple playlist : playlistSimplePager.items) {
+
+                    //If the playlist is empty, just move along
+                    if (playlist.tracks.total <= 0)
+                        continue;
+
                     //mPlaylists.add(playlist.name);
+
+                    //TODO: (In test) Sort out if object will be used
+                    VibePlaylist vPlayListObject = new VibePlaylist(playlist.id, playlist.name, playlist.owner.id);
+                    vPlayListObject.setNumOfTracks(playlist.tracks.total);
+                    mVibePlaylistObject.put(playlist.id, vPlayListObject);
+
                     mPlaylistNamesAndIds.put(playlist.name, playlist.id);
                     mNumOfTracks.put(playlist.name, playlist.tracks.total);
+
                     List<Image> images = playlist.images;
                     String url = images.get(0).url;
                     mPlaylistImages.put(playlist.name, url);
@@ -209,7 +223,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
             @Override
             public void failure(RetrofitError error) {
-                Log.d(TAG, "Failed getting user playlists...");
+                Log.e(TAG, "Failed getting user playlists..." + error.getMessage());
             }
         });
     }
@@ -218,14 +232,12 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      * Get all the tracks of a user playlist.
      * @param playlistId : The id of the playlist chosen
      */
-    private void getPlaylistTracks(String playlistId)
+    private void getPlaylistTracks(String playlistId, String owner)
     {
         if(DEBUG)
-            Log.d(TAG, "getPlaylistTracks -- ");
+            Log.d(TAG, "getPlaylistTracks -- owned by: " + owner);
 
         Log.d(TAG, "AUTH RESPONSE:   " + mAuthResponse.getAccessToken());
-        Log.d(TAG, "Expires in :  " + String.valueOf(mAuthResponse.getExpiresIn()));
-        Log.d(TAG, "AUTH STATE :  " + mAuthResponse.getState());
 
         mPlaylistTrackUris = new ArrayList<>();
         mPlaylistTracks = new ArrayList<>();
@@ -233,14 +245,18 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         SpotifyApi api = new SpotifyApi();
         api.setAccessToken(mAuthResponse.getAccessToken());
 
+        //Get a playlist's tracks Api endpoint
         SpotifyService spotify = api.getService();
-        spotify.getPlaylistTracks(mUserId, playlistId, new Callback<Pager<PlaylistTrack>>() {
+        spotify.getPlaylistTracks(owner, playlistId, new Callback<Pager<PlaylistTrack>>() {
             @Override
             public void success(Pager<PlaylistTrack> playlistTrackPager, Response response) {
                 Log.d(TAG, "Successful call to get Playlist tracks");
                 for (PlaylistTrack track : playlistTrackPager.items) {
                     Log.d(TAG, "Track:  " + track.track.name);
-                    mPlaylistTrackUris.add(track.track.uri);
+
+                    //Local tracks not supported, yet.
+                    if(!track.is_local)
+                        mPlaylistTrackUris.add(track.track.uri);
 
                     List<ArtistSimple> artistSimple = new ArrayList<>(track.track.artists);
                     Track song = new Track();
@@ -249,6 +265,14 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                     mPlaylistTracks.add(song);
                 }
 
+                //Currently Spotify Api has a limit of 50 songs in each query, so for larger playlists
+                //se get the last 30 tracks only.
+                if(mPlaylistTrackUris.size() > 50){
+                    Log.e(TAG, "**************************   Playlist is too big:  " + mPlaylistTrackUris.size());
+                    int offset = mPlaylistTrackUris.size() - 30;
+                    mPlaylistTrackUris = new ArrayList<>(mPlaylistTrackUris.subList(offset, mPlaylistTrackUris.size()-1));
+                    mPlaylistTracks = new ArrayList<>(mPlaylistTracks.subList(offset, mPlaylistTracks.size()-1));
+                }
                 mHandler.sendEmptyMessage(VIBE_START_JUKEBOX_CREATION);
             }
 
@@ -276,6 +300,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                     Log.d(TAG, "onItemClicked -- ");
 
                 List<String> ids = new ArrayList<>(mPlaylistNamesAndIds.values());
+                //List<String> ids = new ArrayList<>(mVibePlaylistObject.keySet());
                 String chosenID = ids.get(position);
                 Log.e(TAG, "PLAYLIST ID CHOSEN  -- >   " + chosenID);
 
@@ -283,7 +308,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                 mChosenPlaylistName = tv.getText().toString();
 
                 // Create a jukebox with the right name and respective Tracks
-                getPlaylistTracks(chosenID);
+                getPlaylistTracks(chosenID, mVibePlaylistObject.get(chosenID).getOwner());
             }
         });
 
@@ -313,11 +338,13 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      */
     private void startJukeboxCreation(String playlistName)
     {
-        Log.d(TAG, "Starting Jukebox Creation with playlist:  " + playlistName);
+        if(DEBUG)
+            Log.d(TAG, "Starting Jukebox Creation with playlist:  " + playlistName);
+
         Intent intent = new Intent(getApplicationContext(), VibeService.class);
-        //intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
-        intent.putExtra("authresponse", mAuthResponse);
-        intent.putExtra("playlistname", playlistName);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, playlistName);
         intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mPlaylistTrackUris);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mPlaylistTracks);

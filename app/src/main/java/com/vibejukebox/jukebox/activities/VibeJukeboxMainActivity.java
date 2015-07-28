@@ -42,51 +42,14 @@ import com.vibejukebox.jukebox.Vibe;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VibeJukeboxMainActivity extends AppCompatActivity implements
-	LocationListener, ConnectionCallbacks, OnConnectionFailedListener
+public class VibeJukeboxMainActivity extends VibeBaseActivity
 {
     /** ----------------------    Fields -----------------------------------*/
 	private static final String TAG = VibeJukeboxMainActivity.class.getSimpleName();
 	private static final boolean DEBUG = DebugLog.DEBUG;
 
-    /** ----------------------    Connection and Location Services-----------------------------------*/
-	//Define request code to send to Google Play Service
-	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-
-	// Milliseconds per second
-	private static final int MILLISECONDS_PER_SECOND = 1000;
-
-	//update interval
-	private static final int UPDATE_INTERVAL_IN_SECONDS = 10;
-
-	private static final long UPDATE_INTERVAL_IN_MILLISECONDS = MILLISECONDS_PER_SECOND
-			      * UPDATE_INTERVAL_IN_SECONDS;
-
-    // A fast interval ceiling
-    private static final int FAST_CEILING_IN_MILLISECONDS = 5000;
-
     /** Request code used to verify if result comes from the login Activity */
     private static final int SPOTIFY_API_REQUEST_CODE = 2015;
-
-    /** Entry point to Google Play services */
-    protected static GoogleApiClient mGoogleApiClient;
-
-    /** Location object indication the last known location */
-    private Location mLastLocation;
-
-    private boolean mLocationServicesConnected = false;
-
-    //private LocationClient mlocationClient;
-    private LocationRequest mLocationRequest;
-
-    // Bool to track whether the app is already resolving an error
-    private boolean mResolvingError = false;
-
-    // Request code to use when launching the resolution activity
-    private static final int REQUEST_RESOLVE_ERROR = 1001;
-
-    // Unique tag for the error dialog fragment
-    private static final String DIALOG_ERROR = "dialog_error";
 
     //Broadcast receiver to get notifications from the system about the current network state
     private BroadcastReceiver mNetworkReceiver;
@@ -97,51 +60,10 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
 	private ArrayList<String> mNearbyJukeboxes = null;
 
     private static String mDeviceName = null;
-    private static ParseGeoPoint mGeoPoint = null;
-
-    //TODO:clean up
-    /*private ImageButton mSpotifyLoginImageButton;
-
-	private void setJukeboxList(List<JukeboxObject> objectList)
-	{
-		if(DEBUG)
-			Log.d(TAG, "setJukeboxList");
-
-		if(objectList != null)
-			mJukeboxObjectList = new ArrayList<>(objectList);
-		else
-			mJukeboxObjectList = Collections.<JukeboxObject>emptyList();
-	}*/
 
     public static String getDeviceName()
     {
         return mDeviceName;
-    }
-
-    private ParseGeoPoint getGeoPointFromMyLocation(Location location)
-    {
-        if(mGoogleApiClient.isConnected() && location != null)
-            return new ParseGeoPoint(location.getLatitude(), location.getLongitude());
-        else
-            return null;
-    }
-
-    protected synchronized void buildGoogleApiClient()
-    {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-
-    //TODO: Implement
-    protected void createLocationRequest()
-    {
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-        locationRequest.setFastestInterval(FAST_CEILING_IN_MILLISECONDS);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
     private String getCreatedJukeboxId()
@@ -156,7 +78,6 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
 
     /**
      * TODO:  FOR TEST, DELETE THIS FUNCTION LATER..
-     *
      */
     private void storeNULLJukeboxID()
     {
@@ -178,12 +99,10 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
 		setContentView(R.layout.activity_jukebox_main);
 
  		//setJukeboxList(null);
-        buildGoogleApiClient();
+        //buildGoogleApiClient();
 
-        //TODO:code obsolete?
+        //TODO: Testing only
         //storeNULLJukeboxID();
-        //setUpLocationServices();
-		//mlocationClient = new LocationClient(this, this, this);
 	}
 
     private void updateUiStartAppButtons()
@@ -235,7 +154,7 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
 		if(DEBUG)
 			Log.d(TAG, "onStart -- ");
 
-		mGoogleApiClient.connect();
+		//mGoogleApiClient.connect();
 	}
 
 	@Override
@@ -245,19 +164,12 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
 		if(DEBUG)
 			Log.d(TAG, "onStop -- ");
 
-		if(mGoogleApiClient.isConnected()){
+		/*if(mGoogleApiClient.isConnected()){
             mGoogleApiClient.disconnect();
-        }
+        }*/
+
         //unregisterReceiver(mNetworkReceiver);
 	}
-
-    @Override
-    protected void onDestroy()
-    {
-        super.onDestroy();
-        if(DEBUG)
-            Log.d(TAG, "onDestroy --  ");
-    }
 
     /**
      * Function called when a user requests to join an active playlist
@@ -286,61 +198,11 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onConnected(Bundle connectionHint)
-    {
-        if(DEBUG)
-            Log.d(TAG, "onConnected - Connected to location Services");
+    public void onConnected(Bundle connectionHint) {
+        super.onConnected(connectionHint);
 
-        mLocationServicesConnected = true;
-        if(mGoogleApiClient.isConnected())
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-        //Store Current location globally
-        Vibe.setCurrentLocation(mLastLocation);
-
-        //mGeoPoint = new ParseGeoPoint(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-
-        //Once Location services is properly connected we can get nearby Jukeboxes
         fetchNearbyJukeboxes();
     }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-        Log.i(TAG, "Connection Suspended. ");
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        //Call connect to attempt to re-establish the connection to Google Play Services
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
-
-        if(mResolvingError){
-            //Already attempting to resolve an error
-            return;
-        } else if(connectionResult.hasResolution()) {
-            try {
-                mResolvingError = true;
-                connectionResult.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
-            } catch (IntentSender.SendIntentException e) {
-                // There was an error with the resolution intent. Try again.
-                mGoogleApiClient.connect();
-            }
-        } else {
-            // Show dialog using GooglePlayServicesUtil.getErrorDialog()
-            showErrorDialog(connectionResult.getErrorCode());
-            mResolvingError = true;
-        }
-
-    }
-
-	@Override
-	public void onLocationChanged(Location loc)
-	{
-		if(DEBUG)
-			Log.d(TAG, "onLocationChanged");
-        //TODO: update location of jukebox
-	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -381,7 +243,12 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
                         AuthenticationResponse.Type.TOKEN,
                         JukeboxApplication.SPOTIFY_API_REDIRECT_URI);
 
-        builder.setScopes(new String[]{"user-read-private", "playlist-read-private", "streaming", "user-library-read"});
+        builder.setScopes(new String[]{"user-read-private",
+                "playlist-read-private",
+                "playlist-read-collaborative",
+                "streaming",
+                "user-library-read"});
+
         AuthenticationRequest request = builder.build();
         AuthenticationClient.openLoginActivity(this, SPOTIFY_API_REQUEST_CODE, request);
     }
@@ -392,16 +259,58 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
     private void launchPlayListSelection(AuthenticationResponse authResponse)
     {
         Intent intent = new Intent(this, PlaylistSelectionActivity.class);
-        intent.putExtra("response", authResponse);
-        intent.putExtra("currentlocation", mLastLocation);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, authResponse);
+        intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mLastLocation);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, getCreatedJukeboxId());
         startActivity(intent);
     }
 
-    /**
-     * Fetches nearby jukeboxes within a 25 meter radius using the Parse API
-     */
-	private void fetchNearbyJukeboxes()
+    @Override
+    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList)
+    {
+        List<String> nearbyJukeboxes = new ArrayList<>();
+        mNumberOfNearbyJukeboxesfound = jukeboxList.size();
+        final TextView tv = (TextView)findViewById(R.id.nearbyJukeboxesTextView);
+
+        if(mNumberOfNearbyJukeboxesfound == 0)
+            tv.setText(R.string.no_nearby_jukeboxes_found);
+        else
+            tv.setText(String.valueOf(mNumberOfNearbyJukeboxesfound) + " " +
+                    getString(R.string.nearby_jukeboxes_found));
+
+        for(JukeboxObject jukebox : jukeboxList){
+            nearbyJukeboxes.add(jukebox.getName());
+        }
+
+        mNearbyJukeboxes = new ArrayList<>(nearbyJukeboxes);
+    }
+}
+
+
+
+
+/*protected synchronized void buildGoogleApiClient()
+    {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }*/
+
+//TODO: Implement
+    /*protected void createLocationRequest()
+    {
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
+        locationRequest.setFastestInterval(FAST_CEILING_IN_MILLISECONDS);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }*/
+
+/**
+ * Fetches nearby jukeboxes within a 25 meter radius using the Parse API
+ */
+	/*private void fetchNearbyJukeboxes()
 	{
 		if(DEBUG)
 			Log.d(TAG, "fetchNearbyJukeboxes -- ");
@@ -442,9 +351,67 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
                 }
             }
         });
-	}
+	}*/
 
-    /* Creates a dialog for an error message */
+    /*@Override
+    public void onConnected(Bundle connectionHint)
+    {
+        if(DEBUG)
+            Log.d(TAG, "onConnected - Connected to location Services");
+
+        mLocationServicesConnected = true;
+        if(mGoogleApiClient.isConnected())
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        //Store Current location globally
+        Vibe.setCurrentLocation(mLastLocation);
+
+        //Once Location services is properly connected we can get nearby Jukeboxes
+        fetchNearbyJukeboxes();
+    }*/
+
+    /*@Override
+    public void onConnectionSuspended(int cause) {
+        Log.i(TAG, "Connection Suspended. ");
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        //Call connect to attempt to re-establish the connection to Google Play Services
+        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
+
+        if(mResolvingError){
+            //Already attempting to resolve an error
+            return;
+        } else if(connectionResult.hasResolution()) {
+            try {
+                mResolvingError = true;
+                connectionResult.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                mGoogleApiClient.connect();
+            }
+        } else {
+            // Show dialog using GooglePlayServicesUtil.getErrorDialog()
+            showErrorDialog(connectionResult.getErrorCode());
+            mResolvingError = true;
+        }
+
+    }
+
+	@Override
+	public void onLocationChanged(Location loc)
+	{
+		if(DEBUG)
+			Log.d(TAG, "onLocationChanged");
+        //TODO: update location of jukebox
+	}*/
+
+
+
+
+    /* Creates a dialog for an error message
     private void showErrorDialog(int errorCode)
     {
         // Create a fragment for the error dialog
@@ -457,12 +424,12 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
         dialogFragment.show(getFragmentManager(), "errordialog");
     }
 
-    /* Called from ErrorDialogFragment when the dialog is dismissed. */
+    // Called from ErrorDialogFragment when the dialog is dismissed.
     public void onDialogDismissed() {
         mResolvingError = false;
     }
 
-    /* A fragment to display an error dialog */
+    // A fragment to display an error dialog
     public static class ErrorDialogFragment extends DialogFragment
     {
         public ErrorDialogFragment() { }
@@ -480,5 +447,4 @@ public class VibeJukeboxMainActivity extends AppCompatActivity implements
         public void onDismiss(DialogInterface dialog) {
             ((VibeJukeboxMainActivity)getActivity()).onDialogDismissed();
         }
-    }
-}
+    }*/
