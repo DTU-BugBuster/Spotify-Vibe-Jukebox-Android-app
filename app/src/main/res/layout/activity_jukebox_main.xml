@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_marginTop="0dp"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
     android:background="@drawable/background"
     tools:context=".VibeJukeboxMainActivity" >
 
@@ -29,12 +30,14 @@
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_below="@id/nearbyJukeboxesTextView"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:layout_marginTop="120dp">
+        android:layout_marginTop="100dp">
 
         <Button
             android:id="@+id/joinButton"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="70dp"
             android:background="@drawable/shape"
             android:text="@string/VIBE_APP_JOIN_JUKEBOX"
@@ -47,7 +50,8 @@
 
         <Button
             android:id="@+id/createJukeboxButton"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="70dp"
             android:background="@drawable/shape"
             android:text="@string/VIBE_APP_START_JUKEBOX"

@@ -2,6 +2,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
     android:background="@drawable/background" >
 
     <include android:id="@+id/mytoolbar"
@@ -10,16 +12,16 @@
     <LinearLayout
         android:id="@+id/playlistCreateButtonsLayout"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_marginTop="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
         android:orientation="horizontal"
-        android:layout_below="@+id/mytoolbar"
-        android:layout_alignLeft="@+id/linearLayout"
-        android:layout_alignStart="@+id/linearLayout">
+        android:gravity="center"
+        android:layout_below="@+id/mytoolbar" >
 
         <Button
             android:id="@+id/createPlaylistForMeButton"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
             android:background="@drawable/shape"
             android:textColor="@color/vibe_border"
@@ -30,7 +32,8 @@
         <Button
             android:id="@+id/artistRadioButton"
             android:onClick="getArtistRadioTracks"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
             android:layout_marginStart="30dp"
             android:layout_marginLeft="30dp"
@@ -55,13 +58,14 @@
         android:layout_height="80dp"
         android:layout_marginTop="65dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginLeft="30dp"
+        android:layout_alignLeft="@id/playlistCreateButtonsLayout"
         android:layout_below="@id/textViewListExplanation"
         android:id="@+id/linearLayout">
 
         <Button
             android:id="@+id/selectStartingPlaylistButton"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
             android:background="@drawable/shape"
             android:textColor="@color/vibe_border"
@@ -72,8 +76,10 @@
         <Button
             android:id="@+id/lastTimeJukebox"
             android:onClick="startLastTimeJukebox"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
+            android:layout_marginStart="30dp"
             android:layout_marginLeft="30dp"
             android:background="@drawable/shape"
             android:textColor="@color/vibe_border"

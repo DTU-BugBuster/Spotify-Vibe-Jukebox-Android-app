@@ -16,7 +16,7 @@
         android:id="@+id/playlistCreateButtonsLayout"
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:layout_marginTop="108dp"
+        android:layout_marginTop="70dp"
         android:orientation="horizontal"
         android:layout_below="@+id/mytoolbar"
         android:layout_alignParentLeft="true"
@@ -24,7 +24,8 @@
 
         <Button
             android:id="@+id/createPlaylistForMeButton"
-            android:layout_width="145dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
             android:layout_marginStart="5dp"
             android:layout_marginLeft="5dp"
@@ -37,7 +38,8 @@
         <Button
             android:id="@+id/artistRadioButton"
             android:onClick="getArtistRadioTracks"
-            android:layout_width="145dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="80dp"
             android:layout_marginStart="20dp"
             android:layout_marginLeft="20dp"

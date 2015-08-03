@@ -23,7 +23,7 @@
             android:layout_marginTop="5dp"
             android:layout_below="@id/mytoolbar"
             android:layout_centerHorizontal="true"
-            android:src="@drawable/vibeappicon" />
+            android:src="@color/vibe_blue_grey" />
 
         <!-- Music Player -->
         <RelativeLayout
