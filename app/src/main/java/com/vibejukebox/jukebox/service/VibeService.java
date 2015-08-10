@@ -23,6 +23,7 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
+import com.vibejukebox.jukebox.SpotifyClient;
 import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
 import com.vibejukebox.jukebox.activities.JukeboxPlaylistActivity;
@@ -30,6 +31,13 @@ import com.vibejukebox.jukebox.activities.JukeboxPlaylistActivity;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class VibeService extends Service {
 
@@ -48,7 +56,7 @@ public class VibeService extends Service {
 
     public static final int VIBE_SERVICE_UPDATE_TRACKS = 3;
 
-    public static final int VIBE_SERVICE_TEST = 4;
+    public static final int VIBE_SERVICE_FETCH_LAST_JUKEBOX = 4;
 
     public static final int VIBE_GET_JUKEBOX_FOR_REFRESH = 100;
 
@@ -129,6 +137,7 @@ public class VibeService extends Service {
 
         Bundle data = new Bundle();
         data.putStringArrayList("list", (ArrayList<String>) trackUris);
+        data.putString("name", mPlaylistName);
         data.putBoolean("trackChanged", mTrackChanged);
 
         final Messenger replyMessenger = mRequestMessage.replyTo;
@@ -199,7 +208,7 @@ public class VibeService extends Service {
         if(DEBUG)
             Log.d(TAG, "onCreate -- ");
 
-        //mJukeboxId = getCreatedJukeboxId();
+        mJukeboxId = getCreatedJukeboxId();
         mLocation = Vibe.getCurrentLocation();
         mRequestMessenger = new Messenger(new RequestHandler(this));
     }
@@ -210,17 +219,23 @@ public class VibeService extends Service {
         if(DEBUG)
             Log.d(TAG, "onStartCommand  -- Vibe Service");
 
-        mJukeboxId = intent.getStringExtra(Vibe.VIBE_JUKEBOX_ID);
-        mTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
-        mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
+        boolean isGettingLastJukebox = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_SERVICE_START_FETCH, false);
         mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
-        mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
+
+        if(!isGettingLastJukebox){
+            mTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
+            mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
+            mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
+        }
 
         // If the Jukebox ID is not null means the user has already created a jukebox so we reuse it.
-        if(mJukeboxId != null)
-            getJukeboxForUpdate(VIBE_SERVICE_UPDATE_ALL); //getJukeboxFromBackend(mPlaylistName);
-        else
+        if(mJukeboxId != null && !isGettingLastJukebox)
+            getJukeboxForUpdate(VIBE_SERVICE_UPDATE_ALL);
+        else if(mJukeboxId == null)
             createJukebox(mPlaylistName);
+        else
+            getJukeboxForUpdate(VIBE_SERVICE_FETCH_LAST_JUKEBOX);
+
         return Service.START_NOT_STICKY;
     }
 
@@ -271,6 +286,8 @@ public class VibeService extends Service {
                         case VIBE_SERVICE_UPDATE_TRACKS:
                             updateJukeboxSongLists(jukebox, mTrackUris);
                             break;
+                        case VIBE_SERVICE_FETCH_LAST_JUKEBOX:
+                            fetchLastJukebox(jukebox);
                     }
 
                 } else {
@@ -298,6 +315,7 @@ public class VibeService extends Service {
                     Log.d(TAG, "Successfully retrieved Jukebox from cloud. ");
                     List<String> trackURIs = new ArrayList<>(jukeboxObject.getQueueSongIds());
 
+                    mPlaylistName = jukeboxObject.getName();
                     mTrackChanged = changeTrack;
 
                     if(changeTrack ){
@@ -375,6 +393,13 @@ public class VibeService extends Service {
         jukebox.saveInBackground();
     }
 
+    private void fetchLastJukebox(JukeboxObject jukebox)
+    {
+        mPlaylistName = jukebox.getName();
+        mTrackUris = jukebox.getQueueSongIds();
+        createTrackListFromURIs(mTrackUris);
+    }
+
     /**
      * Creates a Jukebox object with a given name
      * @param playlistName: Name of the playlist to be created
@@ -400,14 +425,52 @@ public class VibeService extends Service {
         jukebox.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
-                if(e == null){
+                if (e == null) {
                     Log.d(TAG, "Success saving object in background ..");
                     mJukeboxId = jukebox.getObjectId();
                     mHandler.sendEmptyMessage(VIBE_JUKEBOX_OBJECT_CREATION_DONE);
-                }
-                else{
+                } else {
                     Log.e(TAG, "Something went wrong creating new jukebox object in Parse ...");
                 }
+            }
+        });
+    }
+
+    /**
+     * Utility function to get a List<Track> from a list of Spotify Uri ids.
+     * @param trackURIs: Spotify Uri track ids currently in the queue.
+     */
+    private void createTrackListFromURIs(List<String> trackURIs)
+    {
+        String trackUriString = SpotifyClient.getTrackIds(trackURIs);
+
+        Log.e(TAG, "Uri String:  " + trackUriString);
+
+        SpotifyApi api = new SpotifyApi();
+        SpotifyService spotify = api.getService();
+        final List<Track> trackList = new ArrayList<>();
+
+        //Get Several tracks Api point
+        spotify.getTracks(trackUriString, new Callback<Tracks>() {
+            @Override
+            public void success(Tracks tracks, Response response) {
+                Log.d(TAG, "Successful call to get Several tracks from Uri list");
+
+                for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
+                    Log.d(TAG, "Track name:  " + track.name);
+                    Track vibeTrack = new Track(track.artists.get(0).name, track.name);
+                    vibeTrack.setTrackName(track.name);
+                    vibeTrack.setArtistName(track.artists.get(0).name);
+                    trackList.add(vibeTrack);
+                }
+
+                mPlaylistTracks = new ArrayList<>(trackList);
+                mHandler.sendEmptyMessage(VIBE_JUKEBOX_OBJECT_CREATION_DONE);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, "An error occurred getting the list of track Ids from Uri list:  " + error.getMessage());
             }
         });
     }

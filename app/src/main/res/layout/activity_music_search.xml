@@ -2,8 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingRight="10dp"
-    android:paddingLeft="10dp"
+    android:paddingRight="5dp"
+    android:paddingLeft="5dp"
     tools:context=".MusicSearchActivity"
     android:background="@color/vibe_dark" >
 
@@ -55,7 +55,7 @@
         android:layout_below="@id/Search_Button"
         android:layout_above="@id/musicFromText"
         android:layout_marginTop="5dp"
-        android:divider="#00CCCC"
-        android:visibility="gone" >
+        android:divider="#00CCCC" >
+        <!-- android:visibility="gone"-->
     </ListView>
 </RelativeLayout>

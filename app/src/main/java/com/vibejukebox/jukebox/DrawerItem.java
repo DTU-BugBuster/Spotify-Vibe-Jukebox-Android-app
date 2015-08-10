@@ -13,4 +13,8 @@ public class DrawerItem
         mTitle = title;
         mIcon = icon;
     }
+
+    public String getTitle(){
+        return mTitle;
+    }
 }

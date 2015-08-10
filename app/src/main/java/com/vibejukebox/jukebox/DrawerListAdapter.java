@@ -18,11 +18,17 @@ public class DrawerListAdapter extends BaseAdapter
 {
     private Context mContext;
     private List<DrawerItem> mDrawerItems;
+    private boolean isActiveJukebox = true;
 
     public DrawerListAdapter(Context context, List<DrawerItem> drawerItems)
     {
         mContext = context;
         mDrawerItems = new ArrayList<>(drawerItems);
+    }
+
+    public void setJukeboxStatus(boolean isActive)
+    {
+        isActiveJukebox = isActive;
     }
 
     @Override
@@ -44,6 +50,21 @@ public class DrawerListAdapter extends BaseAdapter
     }
 
     @Override
+    public boolean areAllItemsEnabled() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled(int position)
+    {
+        if(position == 0 && !isActiveJukebox){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
     public View getView(int position, View convertView, ViewGroup parent)
     {
         View view;
@@ -57,6 +78,9 @@ public class DrawerListAdapter extends BaseAdapter
         //Action added to side drawer pane
         TextView titleView = (TextView) view.findViewById(R.id.title);
         titleView.setText( mDrawerItems.get(position).mTitle);
+        if(position == 0 && !isActiveJukebox){
+            titleView.setTextColor(mContext.getResources().getColor(R.color.vibe_blue_grey));
+        }
 
         //Corresponding image
         ImageView iconView = (ImageView) view.findViewById(R.id.drawerItemIcon);

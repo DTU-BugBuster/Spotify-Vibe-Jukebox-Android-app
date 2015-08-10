@@ -71,7 +71,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 /**
-This class is used to display the tracks of a current active playlist. It can be either as a
+ This class is used to display the tracks of a current active playlist. It can be either as a
  user hosting the playlist or as a user joining the active playlist. As essential components it
  needs:
  - List of songs as Track objects
@@ -222,7 +222,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             Log.d(TAG, "getCreatedJukeboxId -- ");
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
-        return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
+        String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
+        return accessToken;
     }
 
     @SuppressLint("NewApi")
@@ -259,9 +260,28 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         }
 
         mPlaylistName = playlistName;
-
-        //Setup Main Player Ui
         setupMainLayout(playlistName, isActiveUser);
+
+        /** Toolbar setup */
+        /*mToolbar = (Toolbar)findViewById(R.id.mytoolbar);
+        setSupportActionBar(mToolbar);
+
+        ActionBar actionbar = getSupportActionBar();
+        if(actionbar != null)
+        {
+            actionbar.setDisplayHomeAsUpEnabled(true);
+            actionbar.setHomeButtonEnabled(true);
+            actionbar.setTitle(playlistName);
+        }
+
+        //Create side drawer
+        createDrawerUi(isActiveUser);
+
+        // Display the Playlist (Track name, Artist name)
+        displayTrackList(mPlaylistTracks);
+
+        // Updates UI buttons according if user created or joined a Jukebox
+        updatePlayerUiButtons(isActiveUser);*/
 
         //Establish a connection to the Vibe Service
         mReplyMessenger = new Messenger(new ReplyHandler());
@@ -469,7 +489,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private Connectivity getNetworkConnectivity(Context context)
     {
         ConnectivityManager connectivityManager =
-             (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
 
         if(activeNetwork != null && activeNetwork.isConnected()){

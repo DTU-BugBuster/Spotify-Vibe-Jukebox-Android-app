@@ -48,10 +48,6 @@ public class MusicParameterActivty extends AppCompatActivity
     private static final String TAG = MusicParameterActivty.class.getSimpleName();
     private static final boolean DEBUG = DebugLog.DEBUG;
 
-    private static final String SPOTIFY_API_USER_ID = "userID";
-
-    private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
-
     private static final int VIBE_GET_GENERATED_PLAYLIST = 1;
 
     /** Parameter Sliders */
@@ -130,8 +126,8 @@ public class MusicParameterActivty extends AppCompatActivity
     {
         Intent intent = getIntent();
         mIsArtistRadio = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
-        mAuthResponse = intent.getParcelableExtra(SPOTIFY_API_AUTH_RESPONSE);
-        mPlaylistName = getIntent().getStringExtra("playlistName");
+        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        mPlaylistName = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
     }
 
     private void initUi()

@@ -5,6 +5,7 @@ import android.util.Log;
 import com.spotify.sdk.android.player.Spotify;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
@@ -60,10 +61,22 @@ public final class SpotifyClient
         });
     }
 
+    /**
+     * Function strips the ids of each uri and in the List and makes a comma separated string of all ids
+     * @param trackURIs: list of spotify track uris
+     * @return
+     */
     public static String getTrackIds(List<String> trackURIs)
     {
         String[] strippedItems;
         String trackIds = "";
+
+        // Playlist limit request is 50 songs, so list must be trimmed if more requested
+        /*List<String> modList = null;
+        if(trackURIs.size() > 50){
+            int offset = trackURIs.size() - 50;
+            modList = new ArrayList<>(trackURIs.subList(offset, trackURIs.size()-1));
+        }*/
 
         int count = 0;
         for(String uri : trackURIs)

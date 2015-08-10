@@ -37,6 +37,7 @@
     <string name="Enter_A_SONG">Enter a song or artist </string>
     <string name="Choose_music_source">Choose source </string>
     <string name="PROGRESS_DIALOG_TITLE">Loading ...</string>
+    <string name="SongTitle">Song Title</string>
     <string name="ArtistName">Artist</string>
     <string name="image_desc">description </string>
     <string name="ADD_SONG_TO_QUEUE">Add song?</string>

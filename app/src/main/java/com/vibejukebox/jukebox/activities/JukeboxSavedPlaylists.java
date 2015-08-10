@@ -52,6 +52,8 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
     private static final String VIBE_JUKEBOX_STRING_PREFERENCE = "JukeboxStoredId";
 
+    private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
+
     private static final int VIBE_START_JUKEBOX_CREATION = 10;
 
     private static final int VIBE_GET_USER_PLAYLISTS = 20;
@@ -69,7 +71,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
     //TODO: Implement object.
     private Map<String, VibePlaylist> mVibePlaylistObject;
-
 
     private AuthenticationResponse mAuthResponse;
 
@@ -112,8 +113,22 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
-        Log.d(TAG, "------------------------------------------------------ Returning ID: " +  jukeboxId);
+        Log.e(TAG, "------------------------------------------------------ Returning ID: " +  jukeboxId);
         return jukeboxId;
+    }
+
+    /**
+     * Retrieves the stored Access token from Spotify Api
+     * @return: Access token string
+     */
+    private String getAccessToken()
+    {
+        if(DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
+        return accessToken;
     }
 
     @Override
@@ -137,7 +152,9 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
         // Spotify API variables
         mUserId = intent.getStringExtra(SPOTIFY_API_USER_ID);
+
         mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        mJukeboxId = getCreatedJukeboxId();
 
         mPlaylistNamesAndIds = new HashMap<>();
         mVibePlaylistObject = new HashMap<>();
@@ -150,7 +167,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         super.onRestart();
         if(DEBUG)
             Log.d(TAG,"onRestart -- ");
-        mJukeboxId = getCreatedJukeboxId();
     }
 
     @Override
@@ -183,7 +199,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
         mPlaylistImages = new HashMap<>();
         SpotifyApi api = new SpotifyApi();
-        api.setAccessToken(mAuthResponse.getAccessToken());
+        api.setAccessToken(getAccessToken());
 
         Map<String, Object> params = new HashMap<>();
         params.put("limit", 50);
@@ -237,13 +253,11 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         if(DEBUG)
             Log.d(TAG, "getPlaylistTracks -- owned by: " + owner);
 
-        Log.d(TAG, "AUTH RESPONSE:   " + mAuthResponse.getAccessToken());
-
         mPlaylistTrackUris = new ArrayList<>();
         mPlaylistTracks = new ArrayList<>();
 
         SpotifyApi api = new SpotifyApi();
-        api.setAccessToken(mAuthResponse.getAccessToken());
+        api.setAccessToken(getAccessToken());
 
         //Get a playlist's tracks Api endpoint
         SpotifyService spotify = api.getService();
@@ -342,7 +356,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
             Log.d(TAG, "Starting Jukebox Creation with playlist:  " + playlistName);
 
         Intent intent = new Intent(getApplicationContext(), VibeService.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, playlistName);
         intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);

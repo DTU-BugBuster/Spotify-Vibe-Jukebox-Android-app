@@ -51,6 +51,8 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 
     private String mJukeboxId;
 
+    private String mPlaylistName;
+
     /** List of URIs of the chosen playlist to join */
     private List<String> mTrackUriList;
 
@@ -192,6 +194,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
                 JukeboxObject chosenJukebox = mJukeboxes.get(position);
                 mTrackUriList = new ArrayList<>(chosenJukebox.getQueueSongIds());
                 mJukeboxId = chosenJukebox.getObjectID();
+                mPlaylistName = name;
 
                 //TODO: fix null pointer crash when accessing an empty jukebox
                 if (mTrackUriList == null) {
@@ -263,7 +266,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 
         trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
-        //trackListIntent.putExtra("joiningJukebox", true);
+        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
         trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
         trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
         startActivity(trackListIntent);

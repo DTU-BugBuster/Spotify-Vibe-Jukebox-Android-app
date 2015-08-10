@@ -1,55 +1,52 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-	android:padding="10dp">
-    
+    android:orientation="horizontal"
+    android:padding="10dp">
+
     <LinearLayout
         android:id="@+id/artistSongQueryLayout"
-        android:layout_width="fill_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="10"
+        android:paddingRight="5dp"
+        android:paddingLeft="5dp"
+        android:paddingEnd="5dp"
         android:orientation="vertical" >
-        
-        <TextView 
-        android:id="@+id/songName"
-        android:layout_width="wrap_content"
-    	android:layout_height="wrap_content"
-    	android:textSize="20sp"
-        android:text="@string/artistCover"/>
 
-		<TextView
-	    android:id="@+id/artistName"
-    	android:layout_width="wrap_content"
-    	android:layout_height="wrap_content"
-    	android:text="@string/ArtistName"
-    	android:textSize="14sp" />
-		
-	</LinearLayout>
-        
-    <ImageView 
+        <TextView
+            android:id="@+id/songName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="@string/artistCover"/>
+
+        <TextView
+            android:id="@+id/artistName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ArtistName"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <ImageView
         android:id="@+id/add_song_plus_icon"
         android:contentDescription="@string/image_desc"
-        android:layout_width="22dp"
-     	android:layout_height="22dp"
-     	android:src="@drawable/ic_add_white_36dp"
-        android:layout_marginTop="15dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="5dp"
-        android:layout_marginEnd="5dp" />
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_add_white_36dp"
+        android:layout_marginTop="10dp" />
 
-	<ImageView
+    <ImageView
         android:id="@+id/speaker_icon_playing_track"
         android:contentDescription="@string/image_desc"
-        android:layout_width="22dp"
-     	android:layout_height="22dp"
-        android:src="@drawable/speaker"
-        android:layout_alignTop="@+id/artistSongQueryLayout"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="5dp"
-        android:layout_marginEnd="5dp"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="22dp"
+        android:src="@drawable/speaker_vibe"
+        android:layout_marginTop="10dp"
         android:visibility="gone"/>
 
-</RelativeLayout>
+</LinearLayout>

@@ -1,18 +1,8 @@
 package com.vibejukebox.jukebox;
 
-import android.content.SharedPreferences;
+
 import android.location.Location;
-import android.util.Log;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Tracks;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import android.net.NetworkInfo.State;
 
 /**
  * Created by Sergex on 5/27/15.
@@ -20,6 +10,8 @@ import retrofit.client.Response;
 public final class Vibe {
 
     private static final String TAG = Vibe.class.getSimpleName();
+
+    private static final boolean DEBUG = DebugLog.DEBUG;
 
     public static final String VIBE_NEARBY_JUKEBOXES = "NearbyJukeboxes";
 
@@ -41,11 +33,41 @@ public final class Vibe {
 
     public static final String VIBE_JUKEBOX_ARTIST_RADIO = "ArtistRadio";
 
+    public static final String VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE = "authresponse";
+
+    public static final String VIBE_JUKEBOX_PLAYLIST_NAME = "playlistName";
+
+    public static final String VIBE_JUKEBOX_SERVICE_START_NEW = "newJukeboxCreated";
+
+    public static final String VIBE_JUKEBOX_SERVICE_START_FETCH = "fetchJukeboxWithID";
+
     private static Location mCurrentLocation;
 
-    private Vibe(){
+    private static int MODE_PRIVATE = 1;
 
+    private static boolean isConnected = false;
+
+    private Vibe(){
     }
+
+    /**
+     * Retrieves the created jukebox ID from the shared preferences.
+     * @return: Jukebox object ID String.
+     */
+    /*private String getCreatedJukeboxId()
+    {
+        if (DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
+
+        Context context = JukeboxApplication.getAppContext();
+        SharedPreferences preferences = context.getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
+
+        if (DEBUG)
+            Log.d(TAG, "----------------------------------- Returning ID from service: " + jukeboxId);
+
+        return jukeboxId;
+    }*/
 
     public static Location getCurrentLocation()
     {
@@ -57,6 +79,17 @@ public final class Vibe {
         mCurrentLocation = location;
     }
 
+    public static void setConnectionState(boolean state)
+    {
+        isConnected = state;
+    }
+
+    public static boolean getConnectivityStatus()
+    {
+        return isConnected;
+    }
+
+    /*
     public static void createTrackListFromURIs(List<String> trackURIs)
     {
         SpotifyApi api = new SpotifyApi();
@@ -103,7 +136,7 @@ public final class Vibe {
             count++;
         }
         return trackIds;
-    }
+    }*/
 
    /*
     private String getCreatedJukeboxId()

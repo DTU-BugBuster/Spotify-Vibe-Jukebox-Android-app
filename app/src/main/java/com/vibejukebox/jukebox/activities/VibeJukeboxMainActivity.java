@@ -1,35 +1,20 @@
 package com.vibejukebox.jukebox.activities;
 
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.BroadcastReceiver;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 
 import android.widget.Button;
 import android.widget.TextView;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import android.widget.Toast;
 
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -47,6 +32,11 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     /** ----------------------    Fields -----------------------------------*/
 	private static final String TAG = VibeJukeboxMainActivity.class.getSimpleName();
 	private static final boolean DEBUG = DebugLog.DEBUG;
+    private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
+
+    private static final String VIBE_JUKEBOX_STRING_PREFERENCE = "JukeboxStoredId";
+
+    private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
 
     /** Request code used to verify if result comes from the login Activity */
     private static final int SPOTIFY_API_REQUEST_CODE = 2015;
@@ -72,8 +62,24 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         SharedPreferences preferences = getSharedPreferences(Vibe.VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(Vibe.VIBE_JUKEBOX_STRING_PREFERENCE, null);
 
-        Log.d(TAG, "----------------------------------------------------------- Returning ID: " + jukeboxId);
+        Log.e(TAG, "------------------------------------------------------- Returning ID: " + jukeboxId);
         return jukeboxId;
+    }
+
+    /**
+     * Stores the Access token from Spotify in the shared preferences
+     * @param accessToken
+     */
+    private void storeAccessToken(String accessToken)
+    {
+        if(DEBUG)
+            Log.d(TAG, "storeAuthResponse - ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, accessToken);
+        editor.commit();
     }
 
     /**
@@ -92,11 +98,12 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		if(DEBUG)
+        super.onCreate(savedInstanceState);
+        if(DEBUG)
             Log.d(TAG, "onCreate()");
 
-		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_jukebox_main);
+        setConnectivityStatus();
 
  		//setJukeboxList(null);
         //buildGoogleApiClient();
@@ -104,6 +111,16 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         //TODO: Testing only
         //storeNULLJukeboxID();
 	}
+
+    private void setConnectivityStatus(){
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        if(activeNetwork != null)
+            Vibe.setConnectionState(true);
+        else
+            Vibe.setConnectionState(false);
+    }
 
     private void updateUiStartAppButtons()
     {
@@ -193,6 +210,11 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         if(DEBUG)
             Log.d(TAG, "createNewJukebox -- ");
 
+        if(!Vibe.getConnectivityStatus()){
+            Toast.makeText(this, "Lost connection to Network, please connect and try again", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         //User must login to Spotify account to be able to stream music
         loginToSpotifyAccount();
     }
@@ -219,6 +241,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
                 //Response was successful and contains auth token
                 case TOKEN:
                     //Successful response, launch activity to choose which playlist will start
+                    storeAccessToken(response.getAccessToken());
                     launchPlayListSelection(response);
                     break;
 

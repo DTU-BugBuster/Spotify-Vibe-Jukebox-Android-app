@@ -3,7 +3,10 @@ package com.vibejukebox.jukebox.activities;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
@@ -15,11 +18,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
+import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
+import com.vibejukebox.jukebox.service.VibeService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
@@ -42,10 +51,13 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     private static final String TAG = PlaylistSelectionActivity.class.getSimpleName();
     private static final boolean DEBUG = DebugLog.DEBUG;
 
+    private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
+
+    private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
+
     private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
 
     //private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
-
 
     //private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
 
@@ -73,6 +85,30 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
 
     private String mPlaylistName;
 
+    private String getCreatedJukeboxId()
+    {
+        Log.d(TAG, "getCreatedJukeboxId -- ");
+        SharedPreferences preferences = getSharedPreferences(Vibe.VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        String jukeboxId = preferences.getString(Vibe.VIBE_JUKEBOX_STRING_PREFERENCE, null);
+
+        Log.d(TAG, "----------------------------------------- Returning ID: " + jukeboxId);
+        return jukeboxId;
+    }
+
+    /**
+     * Retrieves the stored Access token from Spotify Api
+     * @return: Access token string
+     */
+    private String getAccessToken()
+    {
+        if(DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
+        return accessToken;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +118,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
         // Get the response to obtain the authorization code
         mAuthResponse = getIntent().getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
         mCurrentLocation = getIntent().getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
-        mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
+
+        //mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
+        mJukeboxId = getCreatedJukeboxId();
 
         if(mJukeboxId != null)
             setContentView(R.layout.activity_playlist_selection_alt);
@@ -179,16 +217,23 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     public void startLastTimeJukebox(View view)
     {
         Log.d(TAG, "Start Last Time Jukebox.");
+        fetchLastJukebox();
     }
 
     /**
-     * Select a playlist to load as starting track list to play
+     * Select a playlist to load as starting track list to play (My Music)
      * @param view
      */
     public void selectListFromUserPlaylists(View view)
     {
         if(DEBUG){
             Log.d(TAG, "selectListFromUserPlaylists");
+        }
+
+        boolean connected = Vibe.getConnectivityStatus();
+        if(!connected){
+            Toast.makeText(this, "Lost Connection to Network, please connect and try again", Toast.LENGTH_LONG).show();
+            return;
         }
 
         //Starts the activity to view all user playlists
@@ -237,36 +282,32 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
      */
     private void getAndSetCurrentUser()
     {
-        if(mAuthResponse != null){
-            final String accessToken = mAuthResponse.getAccessToken();
-            RestAdapter restAdapter = new RestAdapter.Builder()
-                    .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
-                    .setRequestInterceptor(new RequestInterceptor() {
-                        @Override
-                        public void intercept(RequestFacade request) {
-                            request.addHeader("Authorization","Bearer " +accessToken);
-                        }
-                    })
-                    .build();
+        final String accessToken = getAccessToken();
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
+                .setRequestInterceptor(new RequestInterceptor() {
+                    @Override
+                    public void intercept(RequestFacade request) {
+                        request.addHeader("Authorization","Bearer " +accessToken);
+                    }
+                })
+                .build();
 
-            mSpotify = restAdapter.create(SpotifyService.class);
-            mSpotify.getMe(new Callback<UserPrivate>() {
-                @Override
-                public void success(UserPrivate user, Response response) {
-                    if (DEBUG)
-                        Log.d(TAG, "Successful call to get current logged in user");
-                    mUserId = user.id;
-                    Log.d(TAG, "user:  " + user.display_name);
-                }
+        mSpotify = restAdapter.create(SpotifyService.class);
+        mSpotify.getMe(new Callback<UserPrivate>() {
+            @Override
+            public void success(UserPrivate user, Response response) {
+                if (DEBUG)
+                    Log.d(TAG, "Successful call to get current logged in user");
+                mUserId = user.id;
+                Log.d(TAG, "user:  " + user.display_name);
+            }
 
-                @Override
-                public void failure(RetrofitError error) {
-                    Log.e(TAG, "Failed to get current logged in user...");
-                }
-            });
-        } else {
-            Log.e(TAG, "Authentication Response object is NULL.");
-        }
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, "Failed to get current logged in user...");
+            }
+        });
     }
 
     private void setArtistRadioDialog()
@@ -318,8 +359,6 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-
-
     private void launchUserPlaylistsActivity()
     {
         Intent intent = new Intent(this, JukeboxSavedPlaylists.class);
@@ -327,5 +366,35 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
         intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
         intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
         startActivity(intent);
+    }
+
+    /** TODO: Launch Last Jukebox */
+    private void launchPlaylist(List<Track> trackList)
+    {
+        Intent trackListIntent = new Intent(getApplicationContext(),
+                JukeboxPlaylistActivity.class);
+
+        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
+        trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
+        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
+        //trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
+        trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) trackList);
+        startActivity(trackListIntent);
+    }
+
+    /**
+     * Launches the service to create a jukebox with the playlist data in Parse backend
+     */
+    private void fetchLastJukebox()
+    {
+        if(DEBUG)
+            Log.d(TAG, "fetchLastJukebox -- ");
+
+        Intent intent = new Intent(getApplicationContext(), VibeService.class);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SERVICE_START_FETCH, true);
+
+        //The jukebox gets fetched in the Service
+        startService(intent);
     }
 }
