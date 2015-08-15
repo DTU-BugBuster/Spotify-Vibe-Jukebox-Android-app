@@ -17,7 +17,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 
-//import com.loopj.android.http.JsonHttpResponseHandler;
 import com.parse.FunctionCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
@@ -49,29 +48,26 @@ public class MusicSearchActivity extends ListActivity
 
 	private static final String VIBE_TRACK_QUEUE_LIST = "TrackQueue";
 
-    private static final int VIBE_TEST = 1;
-	
+    private static final int VIBE_DISPLAY_QUERY_SEARCH_RESULTS = 1;
+
 	private static final String WEB_SERVICE_SEARCH = "http://ws.spotify.com/search/1/track.json?q=";
 	private String mUrl = null;
 	private ListView songListView;
 	private ProgressDialog mProgressDialog;
 	
 	private static String mJukeboxID;
-	private int mAddedPosition = 0;
 	JukeboxPlaylistActivity mPlayListActivity = null;
 	
 	//Ui elements
 	private List<Track> mQueryTrackList;
 	private List<Track> mQueueTracks;
-
-
 	private EditText mEditText;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch(msg.what){
-                case VIBE_TEST:
+                case VIBE_DISPLAY_QUERY_SEARCH_RESULTS:
                     displaySearchQuery((List<Track>)msg.obj);
                     break;
             }
@@ -147,8 +143,7 @@ public class MusicSearchActivity extends ListActivity
                 }
 
                 //Display the results of the query
-                //displaySearchQuery(trackList);
-                mHandler.sendMessage(mHandler.obtainMessage(VIBE_TEST, trackList));
+                mHandler.sendMessage(mHandler.obtainMessage(VIBE_DISPLAY_QUERY_SEARCH_RESULTS, trackList));
             }
 
             @Override
@@ -247,13 +242,13 @@ public class MusicSearchActivity extends ListActivity
             @Override
             public void done(Integer trackPosition, ParseException e) {
                 if (e == null) {
-                    Log.d(TAG, "Successful call to backend function, song added to queue." + trackPosition);
+                    Log.d(TAG, "Successful call to backend function, song added to queue: " + trackPosition);
                     updateTrackList(track, trackPosition);
 
                 } else {
-                    Log.e(TAG, "Something went wrong with backend function: ");
+                    Log.e(TAG, "Something went wrong adding song in the backend function.. ");
                     e.printStackTrace();
-                    mProgressDialog.cancel();
+                    //mProgressDialog.cancel();
                 }
             }
         });
@@ -266,11 +261,16 @@ public class MusicSearchActivity extends ListActivity
 	private void updateTrackList(Track track , Integer trackPosition)
 	{
 		//Update the queue with the newly added track in the correct position
-		if(track != null)
-			mQueueTracks.add(trackPosition, track);
+		if(track != null){
+            //if the track position is out of bounds, song gets added to the end of the list
+            if(trackPosition > mQueueTracks.size()){
+                mQueueTracks.add(track);
+            } else{
+                mQueueTracks.add(trackPosition, track);
+            }
+        }
 
 		displayUpdatedPlaylist(trackPosition);
-
 	}
 
 	public void displayUpdatedPlaylist(Integer trackPosition)
