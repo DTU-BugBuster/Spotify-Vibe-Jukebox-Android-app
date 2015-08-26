@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -107,6 +108,30 @@ public class MusicSearchActivity extends ListActivity
 	}
 
     @Override
+    protected void onResume()
+    {
+        mEditText = (EditText)findViewById(R.id.Search_Music);
+        mEditText.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if(event.getAction() == KeyEvent.ACTION_DOWN){
+                    switch (keyCode){
+                        case KeyEvent.KEYCODE_DPAD_CENTER:
+                        case KeyEvent.KEYCODE_ENTER:
+                            launchSearch();
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+                return false;
+            }
+        });
+        super.onResume();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.music_search, menu);
@@ -119,11 +144,17 @@ public class MusicSearchActivity extends ListActivity
      */
 	public void searchMusic(View view)
 	{
-		if(DEBUG)
-			Log.d(TAG, "searchMusic()");
-	
-		mEditText = (EditText)findViewById(R.id.Search_Music);
-		String userQuery = mEditText.getText().toString();
+        launchSearch();
+	}
+
+    private void launchSearch()
+    {
+        if(DEBUG)
+            Log.d(TAG, "launchSearch()");
+
+        String userQuery = "";
+        if(mEditText != null)
+            userQuery = mEditText.getText().toString();
 
         final List<Track> trackList = new ArrayList<>();
         SpotifyApi api = new SpotifyApi();
@@ -151,7 +182,7 @@ public class MusicSearchActivity extends ListActivity
                 Log.e(TAG, "Failed to perform search on last query: " + error.getMessage());
             }
         });
-	}
+    }
 
     /**
      * Funcion displays the tracks from the result of the user query
