@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/backgroundsmall"
+    android:orientation="vertical">
+
+    <include android:id="@+id/mytoolbar"
+        layout="@layout/toolbar" />
+
+    <android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/drawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <!-- The main content view -->
+        <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/backgroundsmall">
+            <!--android:id="@+id/songList"-->
+
+            <ImageView
+                android:id="@+id/trackArt"
+                android:layout_width="300dp"
+                android:layout_height="300dp"
+                android:layout_marginTop="20dp"
+                android:layout_centerHorizontal="true"
+                android:src="@color/vibe_dark"/>
+
+            <!-- Music Player -->
+            <LinearLayout
+                android:id="@+id/playerLayout"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_below="@id/trackArt">
+
+                <ImageButton
+                    android:id="@+id/refreshButton"
+                    android:layout_width="50dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_cached_white_36dp"
+                    android:background="@android:color/transparent"
+                    android:onClick="refreshTrackButton" />
+
+                <ImageButton
+                    android:id="@+id/playButton"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/play"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/roundbutton"
+                    android:onClick="playMusic" />
+
+                <ImageButton
+                    android:id="@+id/nextTrackButton"
+                    android:layout_width="50dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/next"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginStart="20dp"
+                    android:background="@android:color/transparent"
+                    android:onClick="skipTrackButton" />
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent"
+                android:dividerHeight="0.1dp"
+                android:divider="@color/vibe_gray_divider"
+                android:background="@color/vibe_dark"
+                android:layout_below="@id/playerLayout">
+            </ListView>
+
+        </RelativeLayout>
+
+        <!-- The navigation drawer -->
+        <ListView android:id="@+id/left_drawer"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:choiceMode="singleChoice"
+            android:divider="@color/vibe_gray_divider"
+            android:dividerHeight="0.1dp"
+            android:background="@drawable/backgroundsmall"/>
+    </android.support.v4.widget.DrawerLayout>
+
+</LinearLayout>
