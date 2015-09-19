@@ -12,6 +12,7 @@
     <string name="VIBE_APP_GET_YOUR_VIBE">Get your Vibe</string>
     <string name="set_up_list_songs">Get your Vibe</string>
     <string name="VIBE_APP_ARTIST">Artist</string>
+    <string name="VIBE_APP_INVALID_ARTIST_QUERY">Artist not found! Try again.</string>
 
     <string name="VIBE_APP_NAME_YOUR_JUKEBOX">Name your jukebox</string>
     <string name="VIBE_APP_DONE">Done</string>
@@ -50,6 +51,9 @@
     <string name="nearby_jukeboxes_found"> nearby jukeboxes found... </string>
     <string name="no_nearby_jukeboxes_found"> No nearby jukeboxes found. </string>
 
+    <string name="VIBE_APP_NON_PREMIUM_ALERT_TITLE">Account</string>
+    <string name="VIBE_APP_ARTIST_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, Join a Jukebox? </string>
+
     <!-- Activity Titles -->
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_jukebox_user_playlist">JukeboxUserPlaylistActivity</string>
@@ -84,7 +88,7 @@
     <string name="VIBE_APP_ITEM1">Vibe Item1</string>
     <string name="VIBE_APP_ITEM2">Vibe Item2</string>
 
-    <string name="VIBE_APP_POOR_CONNECTION_MESSAGE">Poor Connection please check your network connection and try again</string>
+    <string name="VIBE_APP_POOR_CONNECTION_MESSAGE">Poor Connection, please check your network connection and try again. </string>
 
     <!-- Possible deprecated strings to delete -->
     <string name="join_button_text">Join</string>

@@ -49,7 +49,7 @@
             android:layout_marginRight="40dp"
             android:layout_marginLeft="10dp"
             android:layout_marginStart="10dp"
-            android:onClick="joinJukebox" />
+            android:onClick="join" />
 
         <Button
             android:id="@+id/createJukeboxButton"

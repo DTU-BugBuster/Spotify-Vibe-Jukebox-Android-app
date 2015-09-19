@@ -185,7 +185,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     public void onConnected(Bundle bundle)
     {
         if(DEBUG)
-            Log.e(TAG, "onConnected - Connected to location Services (BaseActivity)");
+            Log.d(TAG, "onConnected - Connected to location Services (BaseActivity)");
 
         mLocationServicesConnected = true;
         if(mGoogleApiClient.isConnected())
