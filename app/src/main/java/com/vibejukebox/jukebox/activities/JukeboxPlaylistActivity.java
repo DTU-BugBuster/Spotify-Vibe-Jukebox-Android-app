@@ -38,6 +38,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.player.Config;
@@ -81,6 +82,8 @@ import retrofit.client.Response;
 public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         PlayerNotificationCallback, ConnectionStateCallback
 {
+    private static final String TAG = JukeboxPlaylistActivity.class.getSimpleName();
+
     private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
 
     private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
@@ -111,7 +114,9 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     private static final int VIBE_INSERT_ALBUM_ART = 50;
 
-    public static final int VIBE_TEST = 60;
+    private static final int VIBE_CONNECTION_ERROR = 60;
+
+    public static final int VIBE_TEST = 70;
 
     /** Side drawer Order of items */
     private static final int VIBE_CHANGE_PLAYLIST_NAME_DRAWER = 0;
@@ -120,16 +125,15 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     private String mTrackUriHead;
 
-    private final String TAG = JukeboxPlaylistActivity.class.getSimpleName();
     private final boolean DEBUG = DebugLog.DEBUG;
 
     private boolean mChangeTrack = true;
 
+    private boolean mIsActiveUser = false;
+
     private ListView songListView;
 
     private static String mJukeboxID;
-
-    private Location mStoredLocation;
 
     private static SongListAdapter mSongListAdapter = null;
 
@@ -152,6 +156,9 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
     List<DrawerItem> mDrawerItems = new ArrayList<>();
+
+    /** Circular Progress Bar */
+    //CircularProgressView mProgressBar;
 
     /**  Vibe Bound Service fields */
     private Messenger mService = null;
@@ -201,6 +208,10 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     createTrackListFromURIs(msg.getData().getStringArrayList("list"));
                     break;
 
+                case VIBE_CONNECTION_ERROR:
+                    errorConnectionToast();
+                    break;
+
                 case VIBE_TEST:
                     Log.e(TAG, "Handling message in Activity (reply)");
                     List<String> list = new ArrayList<>(msg.getData().getStringArrayList("list"));
@@ -210,6 +221,11 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     break;
             }
         }
+    }
+
+    private void errorConnectionToast()
+    {
+        Toast.makeText(this, R.string.VIBE_APP_POOR_CONNECTION_MESSAGE, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -222,8 +238,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             Log.d(TAG, "getCreatedJukeboxId -- ");
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
-        String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
-        return accessToken;
+        return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
     }
 
     @SuppressLint("NewApi")
@@ -236,15 +251,15 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
         //Get variables sent with intent
         Intent intent = getIntent();
-        boolean isActiveUser = intent.getBooleanExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
+        mIsActiveUser = intent.getBooleanExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
 
-        String playlistName = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
-        mJukeboxID = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
-        mPlaylistTracks = getIntent().getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
-        mPlayListTrackUris = getIntent().getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
-        mStoredLocation = getIntent().getParcelableExtra("storedLocation");
+        String playlistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
+        mJukeboxID = intent.getStringExtra(Vibe.VIBE_JUKEBOX_ID);
+        mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
+        mPlayListTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
+        mPlaylistName = playlistName;
 
-        if(isActiveUser){
+        if(mIsActiveUser){
             Log.d(TAG, " -- ACTIVE Jukebox -- ");
             //Set the correct layout for user hosting a jukebox
             setContentView(R.layout.activity_jukebox_playlist);
@@ -259,35 +274,19 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             getTrackAlbumArt(mPlayListTrackUris.get(0));
         }
 
-        mPlaylistName = playlistName;
-        setupMainLayout(playlistName, isActiveUser);
-
-        /** Toolbar setup */
-        /*mToolbar = (Toolbar)findViewById(R.id.mytoolbar);
-        setSupportActionBar(mToolbar);
-
-        ActionBar actionbar = getSupportActionBar();
-        if(actionbar != null)
-        {
-            actionbar.setDisplayHomeAsUpEnabled(true);
-            actionbar.setHomeButtonEnabled(true);
-            actionbar.setTitle(playlistName);
-        }
-
-        //Create side drawer
-        createDrawerUi(isActiveUser);
-
-        // Display the Playlist (Track name, Artist name)
-        displayTrackList(mPlaylistTracks);
-
-        // Updates UI buttons according if user created or joined a Jukebox
-        updatePlayerUiButtons(isActiveUser);*/
+        //Setup main Player Ui
+        setupMainLayout(playlistName, mIsActiveUser);
 
         //Establish a connection to the Vibe Service
         mReplyMessenger = new Messenger(new ReplyHandler());
         bindToService();
     }
 
+    /**
+     * Function to setup the music player and playlist Ui
+     * @param playlistName: Name of the current active Jukebox
+     * @param isActiveUser: boolean value if user joined or created a jukebox
+     */
     private void setupMainLayout(String playlistName, boolean isActiveUser)
     {
         /** Toolbar setup */
@@ -440,8 +439,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     }
 
     @Override
-    public void onPostCreate(Bundle savedInstanceState, PersistableBundle persistentState)
-    {
+    public void onPostCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
         super.onPostCreate(savedInstanceState, persistentState);
         //mDrawerToggle.setDrawerIndicatorEnabled(true);
         mDrawerToggle.syncState();
@@ -481,7 +479,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     /**
      * Registering for connectivity changes in Android does not actually deliver them to
      * us in the delivered intent.
-     *
      * @param context Android context
      * @return Connectivity state to be passed to the SDK
      * @see com.spotify.sdk.android.player.Player#setConnectivityStatus(com.spotify.sdk.android.player.Connectivity)
@@ -505,12 +502,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(DEBUG)
             Log.d(TAG, "onRestart -- ");
 
-        Location location = Vibe.getCurrentLocation();
-        if(!location.equals(mStoredLocation)){
-            //Update location in the backend
-            updateJukeboxInCloud(location);
-            mStoredLocation = location;
-        }
     }
 
     @Override
@@ -518,13 +509,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         super.onPause();
 
         unregisterReceiver(mNetworkStateReceiver);
-
-        //Not strictly necessary, but good practice.
-        // Will prevent app from doing extra work in background when paused
-        /*if(mPlayer != null){
-            mPlayer.removePlayerNotificationCallback(JukeboxPlaylistActivity.this);
-            mPlayer.removeConnectionStateCallback(JukeboxPlaylistActivity.this);
-        }*/
     }
 
     @Override
@@ -553,10 +537,18 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
         if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
             Log.d(TAG, "LANDSCAPE");
-            setContentView(R.layout.activity_jukebox_playlist_land);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            if(mIsActiveUser)
+                setContentView(R.layout.activity_jukebox_playlist_land);
+            else
+                setContentView(R.layout.activity_jukebox_playlist_join_land);
+        }
+
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
             Log.d(TAG, "PORTRAIT");
-            setContentView(R.layout.activity_jukebox_playlist);
+            if(mIsActiveUser)
+                setContentView(R.layout.activity_jukebox_playlist);
+            else
+                setContentView(R.layout.activity_jukebox_playlist_join);
         }
 
         handleConfigurationChange();
@@ -564,9 +556,12 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     private void handleConfigurationChange()
     {
+        if(DEBUG)
+            Log.e(TAG, "handleConfigurationChange -- ");
+
         setupMainLayout(mPlaylistName, true);
 
-        //get update from backend
+        //get update from backend, boolean value is trackChanged
         getJukeboxFromCloud(false);
     }
 
@@ -583,12 +578,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     @Override
     protected void onNewIntent(Intent intent)
     {
-        //TODO:clean up
-        /*if(DEBUG){
-            Log.d(TAG, "ON - NEW - INTENT -- ");
-            Log.d(TAG, "POSITION = " + String.valueOf(intent.getIntExtra("position", 0)));
-        }*/
-
+        if(DEBUG)
+            Log.d(TAG, "onNewIntent -- ");
         getJukeboxFromCloud(false);
     }
 
@@ -596,8 +587,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
      * Function called when the user presses the refresh button on the Playlist.
      * @param view
      */
-    public void refreshTrackButton(View view)
-    {
+    public void refreshTrackButton(View view) {
         getJukeboxFromCloud(false);
     }
 
@@ -607,8 +597,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
      */
     private void getJukeboxFromCloud(boolean trackChanged)
     {
-        //TODO: clean up function (not erase)
-        Log.e(TAG, "getJukeboxFromCloud --> " + trackChanged);
+        if(DEBUG)
+            Log.d(TAG, "getJukeboxFromCloud --> " + trackChanged);
 
         Bundle data = new Bundle();
         data.putBoolean("trackChanged", trackChanged);
@@ -648,7 +638,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     }
 
     /**
-     * Function sends a request message to update the active jukebox name in the backend.
+     * Function sends a request message to update the active jukebox location in the backend.
      * @param location
      */
     private void updateJukeboxInCloud(Location location)
@@ -757,6 +747,11 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(DEBUG)
             Log.d(TAG, "getTrackAlbumArt -->  " + trackUri);
 
+//        mProgressBar = (CircularProgressView)findViewById(R.id.progress_bar);
+//        mProgressBar.setColor(getResources().getColor(R.color.vibe_border));
+//        mProgressBar.setVisibility(View.VISIBLE);
+//        mProgressBar.startAnimation();
+
         //Strip only the id of the Spotify URI
         String strippedURI = trackUri.split(":")[2];
 
@@ -767,8 +762,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         spotify.getTrack(strippedURI, new Callback<kaaes.spotify.webapi.android.models.Track>() {
             @Override
             public void success(kaaes.spotify.webapi.android.models.Track track, Response response) {
+                if(DEBUG)
+                    Log.d(TAG, "Successful call to get Track Art.");
+
+                String url;
                 List<Image> images = track.album.images;
-                String url = images.get(1).url;
+
+                if(images.size() > 0)
+                    url = images.get(1).url;
+                else
+                    url = "";
 
                 //Insert the album art image
                 mPlaylistHandler.sendMessage(mPlaylistHandler.obtainMessage(VIBE_INSERT_ALBUM_ART, url));
@@ -787,8 +790,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
      */
     private void insertAlbumArt(String url)
     {
+        if(DEBUG)
+            Log.d(TAG, "insertAlbumArt - " + url);
+
+        //mProgressBar.setVisibility(View.GONE);
+
         ImageView imageView = (ImageView)findViewById(R.id.trackArt);
-        Picasso.with(this).load(url).centerCrop().fit().into(imageView);
+        if(url == "")
+            return;
+        else
+            Picasso.with(this).load(url).centerCrop().fit().into(imageView);
     }
 
     /**
@@ -844,7 +855,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(DEBUG)
             Log.d(TAG, "refreshActivePlaylist -- ");
 
-        if(mChangeTrack){
+        if(mChangeTrack && mIsActiveUser){
             continuePlayback();
         }
 
@@ -863,17 +874,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
      */
     private void createTrackListFromURIs(List<String> trackURIs)
     {
-        String trackUriString = SpotifyClient.getTrackIds(trackURIs);
+        if(DEBUG)
+            Log.d(TAG, "createTrackListFromURIs -- ");
 
-        Log.e(TAG, "Uri String:  " + trackUriString);
+        String trackUriString = SpotifyClient.getTrackIds(trackURIs);
 
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         final List<Track> trackList = new ArrayList<>();
         mTrackUriHead = trackURIs.get(0);
         mPlayListTrackUris = new ArrayList<>(trackURIs);
-
-        Log.e(TAG, "HEAD:  " + mTrackUriHead);
 
         //Get Several tracks Api point
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
@@ -882,7 +892,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                 Log.d(TAG, "Successful call to get Several tracks from Uri list");
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
-                    Log.d(TAG, "Track name:  " + track.name);
+                    if (DEBUG)
+                        Log.d(TAG, "Track name:  " + track.name);
                     Track vibeTrack = new Track(track.artists.get(0).name, track.name);
                     vibeTrack.setTrackName(track.name);
                     vibeTrack.setArtistName(track.artists.get(0).name);
@@ -941,6 +952,23 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         Log.d(TAG, "CLICKED on playlist activity");
         super.onListItemClick(l, v, position, id);
     }*/
+
+    private void updateLocation(Location location)
+    {
+        if(DEBUG)
+            Log.e(TAG, "updateLocation");
+
+        updateJukeboxInCloud(location);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        super.onConnected(bundle);
+        if(DEBUG)
+            Log.e(TAG, "onConnected (Playlist Activity)");
+
+        updateLocation(mLastLocation);
+    }
 
     @Override
     public void onLoggedIn() {
@@ -1034,102 +1062,3 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
 
  */
-
-
-/**
- * TODO: Refactor, repeated code
- * Function to change the jukebox name
- * @param playlistName
- */
-    /*
-    private void getJukeboxFromBackend(final String playlistName)
-    {
-        ParseObject.registerSubclass(JukeboxObject.class);
-        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
-        query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
-            @Override
-            public void done(JukeboxObject jukebox, ParseException e) {
-                if (e == null) {
-                    Log.d(TAG, "Successfully retrieved Jukebox from cloud with ID:  " + mJukeboxID);
-                    jukebox.put("name", playlistName);
-                    jukebox.saveInBackground();
-
-                    if(getSupportActionBar() != null)
-                        getSupportActionBar().setTitle(playlistName);
-
-                } else {
-                    Log.e(TAG, "Error fetching jukebox object, ID: " + mJukeboxID);
-                    Toast.makeText(getApplicationContext(),
-                            getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
-                            Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
-                }
-            }
-        });
-    }*/
-
-/* TODO: cleanup
-    private void setQueueSongs(String jukeboxId, List<String> songs)
-    {
-        if(DEBUG)
-            Log.d(TAG, "setQueueSongs -- ");
-
-        ParseObject jukebox = ParseObject.createWithoutData("JukeBox", jukeboxId);
-        jukebox.put("queueSongIDs", songs);
-        jukebox.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    if (DEBUG)
-                        Log.d(TAG, "Succeeded saving queue songs for active jukebox. ");
-                } else {
-                    Log.e(TAG, "ERROR: failed to save songs .");
-                    if (DEBUG)
-                        e.printStackTrace();
-                }
-            }
-        });
-    } */
-
-
-
-
-/**
- * Gets the currently active Jukebox object and calls to update the Track list UI.
- */
-    /*private void getActiveJukeboxFromCloud(final boolean changeTrack)
-    {
-        if(DEBUG)
-            Log.d(TAG, "getActiveJukeboxFromCloud with ID:  " + mJukeboxID);
-
-        ParseObject.registerSubclass(JukeboxObject.class);
-        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
-        query.getInBackground(mJukeboxID, new GetCallback<JukeboxObject>() {
-            @Override
-            public void done(JukeboxObject jukeboxObject, ParseException e) {
-                if (e == null) {
-                    Log.d(TAG, "Successfully retrieved Jukebox from cloud. ");
-                    List<String> trackURIs = new ArrayList<>(jukeboxObject.getQueueSongIds());
-
-                    mChangeTrack = changeTrack;
-
-                    Log.d(TAG, "TRACK LIST SIZE:  " + trackURIs.size());
-                    if(changeTrack ){
-                        //Variable to update music that is playing
-                        trackURIs.subList(0,1).clear();
-
-                        if(trackURIs.size() == 0){
-                            trackURIs = jukeboxObject.getDefaultQueueSongIds();
-                        }
-                        mPlayListTrackUris = new ArrayList<>(trackURIs);
-                        mTrackUriHead = mPlayListTrackUris.get(0);
-                        jukeboxObject.setQueueSongIds(mPlayListTrackUris);
-                    }
-                    mPlaylistHandler.sendMessage(mPlaylistHandler.obtainMessage(VIBE_CREATE_TRACK_FROM_URIS, trackURIs));
-                } else {
-                    Log.e(TAG, "Error fetching jukebox object..");
-                    e.printStackTrace();
-                }
-            }
-        });
-    }*/

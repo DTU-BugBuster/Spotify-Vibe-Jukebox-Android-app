@@ -59,7 +59,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     // A fast interval ceiling
     private static final int FAST_CEILING_IN_MILLISECONDS = 3;
 
-    private static boolean mLocationServicesConnected = false;
+    public static boolean mLocationServicesConnected = false;
 
     /** Location object indication the last known location */
     protected Location mLastLocation;
@@ -175,8 +175,8 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged(Location location)
     {
-        Log.i(TAG, "Location Changed -- (Application)");
-        Log.d(TAG, "New Location is: " + String.valueOf(location.getLatitude()) + "  "
+        Log.i(TAG, "Location Changed -- (BaseActivity)");
+        Log.d(TAG, "New Location is (Base): " + String.valueOf(location.getLatitude()) + "  "
                 + String.valueOf(location.getLongitude()));
     }
 
@@ -185,7 +185,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     public void onConnected(Bundle bundle)
     {
         if(DEBUG)
-            Log.d(TAG, "onConnected - Connected to location Services (Application)");
+            Log.e(TAG, "onConnected - Connected to location Services (BaseActivity)");
 
         mLocationServicesConnected = true;
         if(mGoogleApiClient.isConnected())
@@ -206,6 +206,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     public void onConnectionSuspended(int i)
     {
         Log.i(TAG, "Connection Suspended. ");
+        mLocationServicesConnected = false;
         mGoogleApiClient.connect();
     }
 
@@ -215,6 +216,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     {
         //Call connect to attempt to re-establish the connection to Google Play Services
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
+        mLocationServicesConnected = false;
 
         if(mResolvingError){
             //Already attempting to resolve an error
