@@ -1,6 +1,7 @@
 package com.vibejukebox.jukebox;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import java.util.List;
  */
 public class DrawerListAdapter extends BaseAdapter
 {
+    private static final String TAG = DrawerListAdapter.class.getSimpleName();
     private Context mContext;
     private List<DrawerItem> mDrawerItems;
     private boolean isActiveJukebox = true;
@@ -57,6 +59,7 @@ public class DrawerListAdapter extends BaseAdapter
     @Override
     public boolean isEnabled(int position)
     {
+        //Log.d(TAG, "isEnabled (Drawer) position:  " + position);
         if(position == 0 && !isActiveJukebox){
             return false;
         } else {
@@ -70,7 +73,7 @@ public class DrawerListAdapter extends BaseAdapter
         View view;
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.drawer_item, null);
+            view = inflater.inflate(R.layout.drawer_item, parent, false);
         } else {
             view = convertView;
         }

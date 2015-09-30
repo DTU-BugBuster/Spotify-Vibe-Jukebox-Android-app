@@ -61,7 +61,7 @@ public class SavedPlayListAdapter extends BaseAdapter{
     {
         View mView = convertView;
         if(mView == null)
-            mView = mInflator.inflate(R.layout.playlistrow, null);
+            mView = mInflator.inflate(R.layout.playlistrow, parent, false);
 
         //Name of playlist chosen
         TextView tvName = (TextView)mView.findViewById(R.id.playlistName);

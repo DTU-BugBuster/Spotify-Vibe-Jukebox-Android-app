@@ -16,9 +16,6 @@ import java.util.ArrayList;
 
 public class SongListAdapter extends BaseAdapter
 {
-	private static final String TAG = SongListAdapter.class.getSimpleName();
-	private static final boolean DEBUG = true;
-	
 	private static LayoutInflater mInflator = null;
 	Context mContext;
 	//private ArrayList<String> mSongList;
@@ -28,9 +25,6 @@ public class SongListAdapter extends BaseAdapter
 
 	public SongListAdapter(Context context, ArrayList<Track> songList, boolean showAddSong)
 	{
-		if(DEBUG)
-			Log.e(TAG, "BaseAdapter -- ");
-		
 		mContext = context;
 		mTrackList = new ArrayList<>(songList);
 		mShowAddSong = showAddSong;
@@ -70,7 +64,7 @@ public class SongListAdapter extends BaseAdapter
 	{
 		View mView = convertView;
 		if(mView == null)
-			mView = mInflator.inflate(R.layout.viewrow, null);
+			mView = mInflator.inflate(R.layout.viewrow, parent, false);
 
         /** Song Name Text view */
 		TextView songNameTView = (TextView) mView.findViewById(R.id.songName);

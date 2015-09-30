@@ -1,6 +1,7 @@
 package com.vibejukebox.jukebox.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -80,6 +81,8 @@ public class VibeService extends Service {
 
     private static final int VIBE_CREATE_TRACK_FROM_URIS = 20;
 
+    private static final int VIBE_CONNECTION_ERROR = 60;
+
     //Messenger (Binder) passed back to clients
     private Messenger mRequestMessenger = null;
 
@@ -125,6 +128,11 @@ public class VibeService extends Service {
                 case VIBE_SERVICE_UPDATE_TITLE:
                     mService.get().mPlaylistName = msg.getData().getString("playlistName");
                     mService.get().getJukeboxForUpdate(VIBE_SERVICE_UPDATE_TITLE);
+                    break;
+
+                case VIBE_SERVICE_UPDATE_LOCATION:
+                    mService.get().mLocation = msg.getData().getParcelable("updatedLocation");
+                    mService.get().getJukeboxForUpdate(VIBE_SERVICE_UPDATE_LOCATION);
                     break;
             }
         }
@@ -249,14 +257,15 @@ public class VibeService extends Service {
 
     private void launchActivePlaylist()
     {
-        Log.d(TAG, "launchActivePlaylist (Service)");
+        if(DEBUG)
+            Log.d(TAG, "launchActivePlaylist (Service)");
 
         Intent intent = new Intent(getApplicationContext(), JukeboxPlaylistActivity.class);
         intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
-        intent.putExtra("storedLocation", mLocation);
+        //intent.putExtra("storedLocation", mLocation);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mPlaylistTracks);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -266,6 +275,9 @@ public class VibeService extends Service {
 
     public void getJukeboxForUpdate(final int mode)
     {
+        if(DEBUG)
+            Log.d(TAG, "getJukeboxForUpdate -- " + mode);
+
         ParseObject.registerSubclass(JukeboxObject.class);
         ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
         query.getInBackground(mJukeboxId, new GetCallback<JukeboxObject>() {
@@ -318,11 +330,11 @@ public class VibeService extends Service {
                     mPlaylistName = jukeboxObject.getName();
                     mTrackChanged = changeTrack;
 
-                    if(changeTrack ){
+                    if (changeTrack) {
                         //Variable to update music that is playing
-                        trackURIs.subList(0,1).clear();
+                        trackURIs.subList(0, 1).clear();
 
-                        if(trackURIs.size() == 0)
+                        if (trackURIs.size() == 0)
                             trackURIs = jukeboxObject.getDefaultQueueSongIds();
 
                         updateJukeboxQueue(jukeboxObject, trackURIs);
@@ -332,6 +344,7 @@ public class VibeService extends Service {
                     mHandler.sendMessage(mHandler.obtainMessage(VIBE_JUKEBOX_REFRESH_TRACK_LIST_UI, trackURIs));
                 } else {
                     Log.e(TAG, "Error fetching jukebox object in service.");
+                    connectionError();
                     e.printStackTrace();
                 }
             }
@@ -340,6 +353,9 @@ public class VibeService extends Service {
 
     private void updateJukeboxAll(JukeboxObject jukebox)
     {
+        if(DEBUG)
+            Log.d(TAG, " -- update ALL --");
+
         final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
         if(geoPoint == null){
             Log.e(TAG, "An error occurred getting the current location");
@@ -365,7 +381,7 @@ public class VibeService extends Service {
 
     private void updateJukeboxLocation(JukeboxObject jukebox, Location location )
     {
-        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
+        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(location);
         if(geoPoint == null){
             Log.e(TAG, "An error occurred getting the current location");
             return;
@@ -395,6 +411,9 @@ public class VibeService extends Service {
 
     private void fetchLastJukebox(JukeboxObject jukebox)
     {
+        if(DEBUG)
+            Log.d(TAG, " -- fetchLastJukebox -- ");
+
         mPlaylistName = jukebox.getName();
         mTrackUris = jukebox.getQueueSongIds();
         createTrackListFromURIs(mTrackUris);
@@ -444,8 +463,6 @@ public class VibeService extends Service {
     {
         String trackUriString = SpotifyClient.getTrackIds(trackURIs);
 
-        Log.e(TAG, "Uri String:  " + trackUriString);
-
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         final List<Track> trackList = new ArrayList<>();
@@ -473,6 +490,21 @@ public class VibeService extends Service {
                 Log.e(TAG, "An error occurred getting the list of track Ids from Uri list:  " + error.getMessage());
             }
         });
+    }
+
+    private void connectionError()
+    {
+        if(DEBUG)
+            Log.d(TAG, "connectionError" );
+
+        final Messenger replyMessenger = mRequestMessage.replyTo;
+        Message replyMessage = Message.obtain(null, VIBE_CONNECTION_ERROR);
+
+        try {
+            replyMessenger.send(replyMessage);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 }
 

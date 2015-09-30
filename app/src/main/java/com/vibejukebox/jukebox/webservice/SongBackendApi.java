@@ -1,5 +1,7 @@
 package com.vibejukebox.jukebox.webservice;
 
+import com.vibejukebox.jukebox.DebugLog;
+
 import retrofit.RestAdapter;
 
 /**
@@ -7,14 +9,23 @@ import retrofit.RestAdapter;
  */
 public class SongBackendApi
 {
+    private static final boolean DEBUG = DebugLog.DEBUG;
+
     private static SongBackendApi INSTANCE;
 
     private SongBackendService mService;
 
     private SongBackendApi()
     {
+        RestAdapter.LogLevel logLevel;
+        if(DEBUG) {
+            logLevel = RestAdapter.LogLevel.FULL;
+        } else {
+            logLevel = RestAdapter.LogLevel.BASIC;
+        }
+
         mService = new RestAdapter.Builder()
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLogLevel(logLevel)
                 .setEndpoint("https://frozen-atoll-2814.herokuapp.com")
                 .build()
                 .create(SongBackendService.class);

@@ -60,6 +60,11 @@ public class JukeboxObject extends ParseObject implements Parcelable
 		this.mObjectID = id;
 	}
 
+	public ParseGeoPoint getLocation()
+    {
+        return (ParseGeoPoint)get("location");
+    }
+
     public void setLocation(ParseGeoPoint locPoint)
     {
         mLocation = locPoint;

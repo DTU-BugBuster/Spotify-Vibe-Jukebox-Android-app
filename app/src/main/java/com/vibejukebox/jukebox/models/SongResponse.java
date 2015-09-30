@@ -13,14 +13,15 @@ public class SongResponse
     List<String> playlist;
 
     public SongResponse(){
-
     }
 
-    public List<String> getPlaylist() {
+    public List<String> getPlaylist()
+    {
         return playlist;
     }
 
-    public void setPlaylist(List<String> playlist) {
+    public void setPlaylist(List<String> playlist)
+    {
         this.playlist = playlist;
     }
 }

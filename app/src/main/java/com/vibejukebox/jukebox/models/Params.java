@@ -9,39 +9,45 @@ import com.google.gson.annotations.SerializedName;
 public class Params
 {
     @SerializedName("acousticness")
-    private double acousticness;
+    private Double acousticness;
 
     @SerializedName("energy")
-    private double energy;
+    private Double energy;
 
     @SerializedName("danceability")
-    private double danceability;
+    private Double danceability;
 
     public Params(){
 
     }
 
-    public double getAcousticness() {
+    public double getAcousticness()
+    {
         return acousticness;
     }
 
-    public void setAcousticness(double acousticness) {
+    public void setAcousticness(Double acousticness)
+    {
         this.acousticness = acousticness;
     }
 
-    public double getEnergy() {
+    public double getEnergy()
+    {
         return energy;
     }
 
-    public void setEnergy(double energy) {
+    public void setEnergy(Double energy)
+    {
         this.energy = energy;
     }
 
-    public double getDanceability() {
+    public double getDanceability()
+    {
         return danceability;
     }
 
-    public void setDanceability(double danceability) {
+    public void setDanceability(Double danceability)
+    {
         this.danceability = danceability;
     }
 }
