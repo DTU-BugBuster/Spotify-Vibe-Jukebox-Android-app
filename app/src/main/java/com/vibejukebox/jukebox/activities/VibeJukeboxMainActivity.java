@@ -117,7 +117,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         SharedPreferences.Editor editor = preferences.edit();
 
         editor.putString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, accessToken);
-        editor.commit();
+        editor.apply();
     }
 
     /**
@@ -318,7 +318,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
                         AuthenticationResponse.Type.TOKEN,
                         JukeboxApplication.SPOTIFY_API_REDIRECT_URI);
 
-        builder.setShowDialog(true)
+        builder.setShowDialog(false)
                 .setScopes(new String[]{"user-read-private",
                 "playlist-read-private",
                 "playlist-read-collaborative",

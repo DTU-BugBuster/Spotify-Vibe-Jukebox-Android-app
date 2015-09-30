@@ -2,9 +2,9 @@ package com.vibejukebox.jukebox.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
@@ -50,16 +51,29 @@ public class MusicParameterActivty extends AppCompatActivity
 
     private static final int VIBE_GET_GENERATED_PLAYLIST = 1;
 
+    private static final int VIBE_USER_SAVED_TRACKS = 2;
+
+    private static final int VIBE_SERVER_ERROR = -1;
+
+    private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
+
+    private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
+
     /** Parameter Sliders */
     private double mEnergyValue;
     private double mAcousticValue;
     private double mDanceValue;
+
+    private boolean mEnergyTouched = false;
+    private boolean mAcousticnessTouched = false;
+    private boolean mDanceTouched = false;
 
     private TextView mEnergyValueText;
     private TextView mAcousticValueText;
     private TextView mDanceValueText;
 
     private String mPlaylistName;
+    private String mArtistName;
 
     /**
      * Lists holding the list of saved songs when creating playlists from favorites
@@ -85,11 +99,35 @@ public class MusicParameterActivty extends AppCompatActivity
             switch (msg.what){
                 case VIBE_GET_GENERATED_PLAYLIST:
                     startCreatedPlaylist();
-                return true;
+                    return true;
+                case VIBE_USER_SAVED_TRACKS:
+                    requestVibedPlaylist();
+                    return true;
+                case VIBE_SERVER_ERROR:
+                    showServerError();
+                    return true;
             }
             return false;
         }
     });
+
+    /**
+     * Retrieves the stored Access token from Spotify Api
+     * @return: Access token string
+     */
+    private String getAccessToken()
+    {
+        if(DEBUG)
+            Log.d(TAG, "getAccessToken -- ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
+        return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
+    }
+
+    private void showServerError()
+    {
+        Toast.makeText(this, R.string.VIBE_APP_SERVER_ERROR, Toast.LENGTH_LONG).show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +154,7 @@ public class MusicParameterActivty extends AppCompatActivity
     {
         super.onResume();
 
+        Log.e(TAG, "onResume");
         if(!mIsArtistRadio){
             mTrackUris = new ArrayList<>();
             getSavedTracks();
@@ -124,10 +163,14 @@ public class MusicParameterActivty extends AppCompatActivity
 
     private void initValues()
     {
+        Log.e(TAG, "initValues in Music PARAMETER ACTIVITY");
         Intent intent = getIntent();
         mIsArtistRadio = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
         mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
-        mPlaylistName = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
+        mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
+        mArtistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST);
+
+        Log.e(TAG, "ARTIST RADIO:   " + mIsArtistRadio);
     }
 
     private void initUi()
@@ -146,7 +189,7 @@ public class MusicParameterActivty extends AppCompatActivity
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                mEnergyTouched = true;
             }
 
             @Override
@@ -166,7 +209,7 @@ public class MusicParameterActivty extends AppCompatActivity
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                mAcousticnessTouched = true;
             }
 
             @Override
@@ -180,13 +223,13 @@ public class MusicParameterActivty extends AppCompatActivity
         danceabilitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mDanceValue = progress*0.01;
+                mDanceValue = progress * 0.01;
                 mDanceValueText.setText(String.valueOf(progress));
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                mDanceTouched = true;
             }
 
             @Override
@@ -207,51 +250,55 @@ public class MusicParameterActivty extends AppCompatActivity
 
     /**
      * Called when the user presses the Launch button after setting parameters
-     * @param view
+     * @param view: View
      */
     public void launch(View view)
     {
-        Log.d(TAG, " Start Playlist Launch ");
-        if(mIsArtistRadio)
+        if(mIsArtistRadio) {
             requestArtistRadio();
-        else
+        } else {
+            //getSavedTracks();
             requestVibedPlaylist();
+        }
     }
 
     private void startCreatedPlaylist()
     {
-        if(mPlaylistName != null && !mPlaylistName.equals(""))
+        Log.e(TAG, "startCreatedPlaylist (starting service)");
+        if(mPlaylistName == null || mPlaylistName.equals(""))
             mPlaylistName = "Vibed Playlist";
 
         Intent intent = new Intent(this, VibeService.class);
-        intent.putExtra("authresponse", mAuthResponse);
-        intent.putExtra("playlistname", mPlaylistName);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mTracks);
 
         startService(intent);
     }
 
+    /**
+     * Launch playlist generation based on a user chosen artist.
+     */
     private void requestArtistRadio()
     {
         if(DEBUG)
-            Log.d(TAG, "requestArtistRadio -- ");
+            Log.e(TAG, "requestArtistRadio -- " + mArtistName);
 
-        Params params = new Params();
-        params.setAcousticness(mAcousticValue);
-        params.setEnergy(mEnergyValue);
-        params.setDanceability(mDanceValue);
+        // If the user did not touch a parameter slider that parameter is not taken into
+        //account for the playlist generation
+        Params params = getParametersIfZero();
 
-        //TODO: Input an Artist with Spotify URI
+        // Artist sent as a list
         List<String> artistRadio = new ArrayList<>();
-        artistRadio.add("ARTOA5I1187B9A4CEF");
+        artistRadio.add(mArtistName);
 
         //Launch a dialog to show user backend process is ongoing
         launchProcessingDialog();
 
         //Track Uris collected in getSavedTracks() function
         SongTask songTask = new SongTask(true, params, artistRadio);
-        SongBackendApi.getInstance().getBackendService().requestTracksFromfavorites(songTask, new Callback<SongResponse>() {
+        SongBackendApi.getInstance().getBackendService().requestTracksFromFavorites(songTask, new Callback<SongResponse>() {
             @Override
             public void success(SongResponse songResponse, Response response) {
                 Log.d(TAG, "Successful call to Artist radio backend service. ");
@@ -269,36 +316,25 @@ public class MusicParameterActivty extends AppCompatActivity
         });
     }
 
+    /** TODO: Backend dev not finished */
     private void requestVibedPlaylist()
     {
-        Log.d(TAG, "requestRetroPlaylist -- " + mAcousticValue + " " + mEnergyValue + " " + mDanceValue);
+        if(DEBUG)
+            Log.d(TAG, "requestRetroPlaylist --> " + mAcousticValue + " " + mEnergyValue + " " + mDanceValue);
 
-        //TODO: TEST TRACKS
-        /*String[] testSongs = {
-                "spotify:track:0NtO8R2saehkOjdlPrRq0V",
-                "spotify:track:6747MQ9ojYX37enpeHN7DG",
-                "spotify:track:7lpIOIdQzePKF8m4EM0BMR"
-        };
-
-        List<String> songArr = new ArrayList<>();
-        for(String song : testSongs){
-            songArr.add(song);
-        }*/
-
-        Params params = new Params();
-        params.setAcousticness(mAcousticValue);
-        params.setEnergy(mEnergyValue);
-        params.setDanceability(mDanceValue);
+        //Get Correct parameters from sliders
+        Params params = getParametersIfZero();
 
         //Launch a dialog to show user backend process is ongoing
         launchProcessingDialog();
 
         //Track Uris collected in getSavedTracks() function
-        SongTask songTask = new SongTask(false, params, mTrackUris);
-        SongBackendApi.getInstance().getBackendService().requestTracksFromfavorites(songTask, new Callback<SongResponse>() {
+        SongTask songTask = new SongTask(false, false, params, mTrackUris);
+        SongBackendApi.getInstance().getBackendService().requestTracksFromFavorites(songTask, new Callback<SongResponse>() {
             @Override
             public void success(SongResponse songResponse, Response response) {
-                Log.d(TAG, "Successful call to backend service. ");
+                if(DEBUG)
+                    Log.d(TAG, "Successful call to backend service (playlist generated based on saved tracks)");
                 mProgressDialog.cancel();
                 parseBackendResponse(songResponse);
             }
@@ -306,17 +342,75 @@ public class MusicParameterActivty extends AppCompatActivity
             @Override
             public void failure(RetrofitError error) {
                 mProgressDialog.cancel();
-                Log.e(TAG, "Failed call to backend playlist service.");
+                Log.e(TAG, "Failed generating playlist from user's saved tracks");
                 Log.e(TAG, "Message -- > " + error.getMessage());
                 error.printStackTrace();
+
+                //Sets all parameters back to "nothing"
+                resetSliderParameters();
+
+                //Displays toast to user that a server error has occured
+                mHandler.sendEmptyMessage(VIBE_SERVER_ERROR);
             }
         });
     }
 
-    private void parseBackendResponse(SongResponse response) {
-        Log.d(TAG, "parseBackendResponse");
+    /**
+     * Function sets each parameter to null if the slider has not been touched by the user
+     * @return: Params object
+     */
+    private Params getParametersIfZero()
+    {
+        Params params = new Params();
+        if(!mEnergyTouched)
+            params.setEnergy(null);
+        else
+            params.setEnergy(mEnergyValue);
+
+        if(!mAcousticnessTouched)
+            params.setAcousticness(null);
+        else
+            params.setAcousticness(mAcousticValue);
+
+        if(!mDanceTouched)
+            params.setDanceability(null);
+        else
+            params.setDanceability(mDanceValue);
+
+        return params;
+    }
+
+    private void resetSliderParameters()
+    {
+        SeekBar energySlider = (SeekBar)findViewById(R.id.EnergyBar);
+        energySlider.setProgress(0);
+
+        SeekBar acousticSlider = (SeekBar)findViewById(R.id.AcousticnessBar);
+        acousticSlider.setProgress(0);
+
+        SeekBar danceSlider = (SeekBar)findViewById(R.id.DanceabilityBar);
+        danceSlider.setProgress(0);
+
+        mEnergyTouched = false;
+        mAcousticnessTouched = false;
+        mDanceTouched = false;
+    }
+
+    /**
+     * Function parses the json response from the backend
+     * @param response: SongResponse object
+     */
+    private void parseBackendResponse(SongResponse response)
+    {
+        if(DEBUG)
+            Log.d(TAG, "parseBackendResponse");
+
         mTrackUris = new ArrayList<>(response.getPlaylist());
-        getTrackObjects(mTrackUris);
+
+        if(!mTrackUris.isEmpty())
+            getTrackObjects(mTrackUris);
+        else
+            Toast.makeText(this, "No matches with those parameters, please try again", Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -326,10 +420,10 @@ public class MusicParameterActivty extends AppCompatActivity
     {
         Log.d(TAG, "getSavedTracks");
 
-        final List<Track> savedTracks = new ArrayList<>();
+        //final List<Track> savedTracks = new ArrayList<>();
         SpotifyApi api = new SpotifyApi();
 
-        if(mAuthResponse == null){
+        if(getAccessToken() == null){
             Log.e(TAG, "Error: Authentication is null.");
             return;
         }
@@ -338,18 +432,19 @@ public class MusicParameterActivty extends AppCompatActivity
         Map<String, Object> options = new HashMap<>();
         options.put("limit",50);
 
-        api.setAccessToken(mAuthResponse.getAccessToken());
+        api.setAccessToken(getAccessToken());
         SpotifyService spotify = api.getService();
 
         //Get a User’s Saved Tracks Api endpoint
         spotify.getMySavedTracks(options, new Callback<Pager<SavedTrack>>() {
             @Override
             public void success(Pager<SavedTrack> savedTrackPager, Response response) {
-                Log.d(TAG, "SUCCESS");
+                if(DEBUG)
+                    Log.d(TAG, "Success getting saved user's tracks");
                 String trackName;
                 String artist;
 
-                for(SavedTrack savedTrack : savedTrackPager.items){
+                for (SavedTrack savedTrack : savedTrackPager.items) {
                     trackName = savedTrack.track.name;
                     artist = savedTrack.track.artists.get(0).name;
                     Track track = new Track();
@@ -357,8 +452,9 @@ public class MusicParameterActivty extends AppCompatActivity
                     track.setTrackName(trackName);
 
                     Log.d(TAG, "Artist: " + artist + "   Track: " + trackName);
-                    savedTracks.add(track);
+                    //savedTracks.add(track);
                     mTrackUris.add(savedTrack.track.uri);
+                    //mHandler.sendMessage(mHandler.obtainMessage(VIBE_USER_SAVED_TRACKS, mTrackUris));
                 }
 
                 //mTracks = new ArrayList<>(savedTracks);
@@ -366,20 +462,19 @@ public class MusicParameterActivty extends AppCompatActivity
 
             @Override
             public void failure(RetrofitError error) {
-                Log.d(TAG, "FAILURE -- > " + error.getMessage());
+                Log.e(TAG, "Failed getting user's saved tracks. " + error.getMessage());
                 error.printStackTrace();
             }
         });
     }
 
     /**
-     * TODO: CHECK IF WORKING
-     * @param trackURIs
+     * Function gets a list of Vibe Track objects from a list of Spotify URIs
+     * @param trackURIs: List of Spotify uris
      */
     private void getTrackObjects(List<String> trackURIs)
     {
         String trackUriString = SpotifyClient.getTrackIds(trackURIs);
-
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         final List<Track> trackList = new ArrayList<>();
@@ -388,7 +483,8 @@ public class MusicParameterActivty extends AppCompatActivity
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
             @Override
             public void success(Tracks tracks, Response response) {
-                Log.d(TAG, "Successful call to get Several tracks from Uri list");
+                if(DEBUG)
+                    Log.d(TAG, "Successful call to get Several tracks from Uri list");
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
                     Log.d(TAG, "Track name:  " + track.name);

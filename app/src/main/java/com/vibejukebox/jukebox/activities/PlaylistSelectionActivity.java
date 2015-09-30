@@ -5,9 +5,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -21,17 +21,18 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.player.Spotify;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
-import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
 import com.vibejukebox.jukebox.service.VibeService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Artist;
+import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.UserPrivate;
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
@@ -46,10 +47,13 @@ import retrofit.client.Response;
  * based on the users's starred tracks.
  */
 
-public class PlaylistSelectionActivity extends AppCompatActivity {
-
+public class PlaylistSelectionActivity extends AppCompatActivity
+{
     private static final String TAG = PlaylistSelectionActivity.class.getSimpleName();
+
     private static final boolean DEBUG = DebugLog.DEBUG;
+
+    private static final int VIBE_GET_SPOTIFY_ARTIST_URI = 1;
 
     private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
 
@@ -57,14 +61,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
 
     private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
 
-    //private static final String SPOTIFY_API_USER_PLAYLISTS = "userplaylists";
-
-    //private static final String SPOTIFY_API_NUMBER_OF_TRACKS_PER_PLAYLIST = "numberoftracks";
-
     private static final String SPOTIFY_API_USER_ID = "userID";
 
     /** Spotify Api objects */
-    private SpotifyService mSpotify;
 
     private AuthenticationResponse mAuthResponse;
 
@@ -80,10 +79,22 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     /** Name of the user created Jukebox object */
     private String mJukeboxId;
 
+    private String mJukeboxName;
+
     /** Current location */
     private Location mCurrentLocation;
 
-    private String mPlaylistName;
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch(msg.what){
+                case VIBE_GET_SPOTIFY_ARTIST_URI:
+                    getArtistUri((String)msg.obj);
+                    return true;
+            }
+            return false;
+        }
+    });
 
     private String getCreatedJukeboxId()
     {
@@ -102,11 +113,10 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     private String getAccessToken()
     {
         if(DEBUG)
-            Log.d(TAG, "getCreatedJukeboxId -- ");
+            Log.d(TAG, "getAccessToken -- ");
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
-        String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
-        return accessToken;
+        return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
     }
 
     @Override
@@ -117,6 +127,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
 
         // Get the response to obtain the authorization code
         mAuthResponse = getIntent().getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+
         mCurrentLocation = getIntent().getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
 
         //mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
@@ -184,8 +195,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     }
 
     /**
-     * Creates a playlist based on the current users's starred tracks
-     * @param view
+     * Creates a playlist based on the current users's saved tracks
+     * @param view: View
      */
     public void createPlaylistFromUserFavorites(View view)
     {
@@ -202,7 +213,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
 
     /**
      * Create a playlist based on an artist
-     * @param view
+     * @param view: View
      */
     public void getArtistRadioTracks(View view)
     {
@@ -216,13 +227,12 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
 
     public void startLastTimeJukebox(View view)
     {
-        Log.d(TAG, "Start Last Time Jukebox.");
         fetchLastJukebox();
     }
 
     /**
      * Select a playlist to load as starting track list to play (My Music)
-     * @param view
+     * @param view: View
      */
     public void selectListFromUserPlaylists(View view)
     {
@@ -242,39 +252,45 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
         intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
         intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
         startActivity(intent);
+    }
 
+    private void getArtistUri(String artist)
+    {
+        if(DEBUG)
+            Log.d(TAG, "getArtistUri --  "  + artist);
 
-        //launchUserPlaylistsActivity();
-        //TODO: CLEAN UP
-        /*SpotifyApi api = new SpotifyApi();
-        api.setAccessToken(mAuthResponse.getAccessToken());
+        SpotifyApi api = new SpotifyApi();
+        api.setAccessToken(getAccessToken());
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("limit", 40);
-        params.put("offset", 1);
-
-        //Get a List of a User's Playlists Api endpoint
-        SpotifyService spotifyService = api.getService();
-        spotifyService.getPlaylists(mUserId, params, new Callback<Pager<PlaylistSimple>>() {
+        SpotifyService spotify = api.getService();
+        spotify.searchArtists(artist, new Callback<ArtistsPager>() {
             @Override
-            public void success(Pager<PlaylistSimple> playlistSimplePager, Response response) {
-                Log.d(TAG, "Successful call to get User playlists.");
-                for (PlaylistSimple playlist : playlistSimplePager.items) {
-                    //mPlaylists.add(playlist.name);
-                    mPlayListNamesAndIds.put(playlist.name, playlist.id);
-                    mNumOfTracks.put(playlist.name, playlist.tracks.total);
-                }
+            public void success(ArtistsPager artistsPager, Response response) {
+                if (DEBUG)
+                    Log.d(TAG, "Successful artist search");
 
-                //Launch Activity to display all user playLists
-                launchUserPlaylistsActivity(mPlayListNamesAndIds);
+                List<Artist> items = artistsPager.artists.items;
+
+                //Checks if the query is a valid artist, if it is it will have items
+                if (items.size() > 0) {
+                    String name = items.get(0).uri;
+                    launchParameterActivityWithArtist(name, mJukeboxName);
+                } else {
+                    showInvalidArtistToast();
+                }
             }
 
             @Override
             public void failure(RetrofitError error) {
-                Log.d(TAG, "Failed getting user playlists...");
-
+                Log.e(TAG, "Failed getting artist Uri.");
+                error.printStackTrace();
             }
-        });*/
+        });
+    }
+
+    private void showInvalidArtistToast()
+    {
+        Toast.makeText(this, R.string.VIBE_APP_INVALID_ARTIST_QUERY, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -293,8 +309,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
                 })
                 .build();
 
-        mSpotify = restAdapter.create(SpotifyService.class);
-        mSpotify.getMe(new Callback<UserPrivate>() {
+        SpotifyService spotify = restAdapter.create(SpotifyService.class);
+        spotify.getMe(new Callback<UserPrivate>() {
             @Override
             public void success(UserPrivate user, Response response) {
                 if (DEBUG)
@@ -323,15 +339,16 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
                         final EditText editArtistText = (EditText)view.findViewById(R.id.artistForRadio);
                         String artist = editArtistText.getText().toString();
 
-                        final EditText jukeboxedit = (EditText)view.findViewById(R.id.newJukeboxName);
-                        String jukeboxName = jukeboxedit.getText().toString();
+                        final EditText jukeboxEdit = (EditText)view.findViewById(R.id.newJukeboxName);
+                        mJukeboxName = jukeboxEdit.getText().toString();
 
-                        Log.e(TAG, "ARTIST: " + jukeboxName);
-                        if(jukeboxName.equals(""))
-                            jukeboxName = "Vibed Playlist";
+                        Log.e(TAG, "ARTIST: " + artist);
+                        if(mJukeboxName.equals(""))
+                            mJukeboxName = "Vibed Playlist";
 
                         //Start Activity with artist name
-                        launchParameterActivityWithArtist(artist, jukeboxName);
+                        mHandler.sendMessage(mHandler.obtainMessage(VIBE_GET_SPOTIFY_ARTIST_URI, artist));
+
                     }
                 })
                 .setNegativeButton(R.string.VIBE_APP_CANCEL, new DialogInterface.OnClickListener(){
@@ -345,41 +362,22 @@ public class PlaylistSelectionActivity extends AppCompatActivity {
     }
 
     /**
-     * TODO: set Chosen Artist for Artist radio
-     * @param artistName
-     * @param jukeboxName
+     * Launches the parameter activity for playlist generation based on an artist
+     * @param artistName: Name of the artist chosen by the user
+     * @param jukeboxName: name of the jukebox to play
      */
     private void launchParameterActivityWithArtist(String artistName, String jukeboxName)
     {
+        if(DEBUG)
+            Log.d(TAG, "launchParameterActivityWithArtist -- > " + artistName);
+
         //Start the Music Parameter Activity
         Intent intent = new Intent(this, MusicParameterActivty.class);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST, artistName);
         intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, jukeboxName);
         startActivity(intent);
-    }
-
-    private void launchUserPlaylistsActivity()
-    {
-        Intent intent = new Intent(this, JukeboxSavedPlaylists.class);
-        intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
-        intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
-        intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
-        startActivity(intent);
-    }
-
-    /** TODO: Launch Last Jukebox */
-    private void launchPlaylist(List<Track> trackList)
-    {
-        Intent trackListIntent = new Intent(getApplicationContext(),
-                JukeboxPlaylistActivity.class);
-
-        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
-        trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
-        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
-        //trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
-        trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) trackList);
-        startActivity(trackListIntent);
     }
 
     /**

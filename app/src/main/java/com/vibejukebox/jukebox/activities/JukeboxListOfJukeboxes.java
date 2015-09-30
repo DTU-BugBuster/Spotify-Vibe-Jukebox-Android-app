@@ -174,6 +174,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
             {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
                 textView.setTextColor(getResources().getColor(R.color.vibe_white));
+                textView.setPadding(10,30,10,30);
                 textView.setTextSize(20);
                 return textView;
             }
