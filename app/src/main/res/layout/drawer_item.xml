@@ -2,29 +2,30 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="60dp" >
 
     <ImageView
         android:id="@+id/drawerItemIcon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="#454"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="10dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginTop="5dp" />
+        android:layout_marginStart="10dp"
+        android:layout_centerVertical="true"
+        android:src="#454" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:textSize="18sp"
-        android:gravity="center_vertical"
         android:textColor="@color/vibe_white"
         android:text="@string/VIBE_APP_ITEM"
-        android:layout_marginLeft="30dp"
-        android:layout_marginStart="30dp"
-        android:layout_toRightOf="@+id/drawerItemIcon" />
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:paddingStart="20dp"
+        android:paddingRight="10dp"
+        android:paddingEnd="10dp"
+        android:layout_toRightOf="@id/drawerItemIcon"
+        android:layout_toEndOf="@id/drawerItemIcon"/>
 
 </RelativeLayout>

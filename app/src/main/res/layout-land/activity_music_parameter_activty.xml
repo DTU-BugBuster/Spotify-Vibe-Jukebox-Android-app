@@ -1,0 +1,114 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.vibejukebox.jukebox.activities.MusicParameterActivty"
+    android:background="@drawable/background"
+    android:clickable="true">
+
+    <include android:id="@+id/mytoolbarParam"
+        layout="@layout/toolbar" />
+
+    <!-- MAIN PARAMETER LAYOUT -->
+    <LinearLayout
+        android:id="@+id/parameterLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/mytoolbarParam"
+        android:layout_marginTop="45dp"
+        android:layout_alignParentTop="true">
+
+        <!-- ENERGY PARAMETER LAYOUT -->
+        <TextView
+            android:id="@+id/EnergyText"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:text="@string/VIBE_APP_ENERGY_TEXT"
+            android:textColor="@color/vibe_white"
+            android:layout_marginBottom="-15dp"/>
+
+        <SeekBar
+            android:id="@+id/EnergyBar"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="15dp"
+            android:paddingRight="2dp"
+            android:progressDrawable="@drawable/progresslider"/>
+
+        <TextView
+            android:id="@+id/EnergyValueView"
+            android:text="@string/VIBE_APP_ZERO_PARAM"
+            android:textColor="@color/vibe_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"/>
+
+        <!-- ACOUSTICNESS PARAMETER LAYOUT -->
+        <TextView
+            android:id="@+id/AcousticnessText"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:text="@string/VIBE_APP_ACOUSTICNESS_TEXT"
+            android:textColor="@color/vibe_white"
+            android:layout_marginBottom="-15dp"/>
+
+        <SeekBar
+            android:id="@+id/AcousticnessBar"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="15dp"
+            android:paddingRight="2dp"
+            android:progressDrawable="@drawable/progresslider"/>
+
+        <TextView
+            android:id="@+id/AcousticValueView"
+            android:text="@string/VIBE_APP_ZERO_PARAM"
+            android:textColor="@color/vibe_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"/>
+
+        <!-- DANCEABILITY PARAMETER LAYOUT -->
+        <TextView
+            android:id="@+id/DanceabilityText"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:text="@string/VIBE_APP_DANCEABILITY_TEXT"
+            android:textColor="@color/vibe_white"
+            android:layout_marginBottom="-15dp" />
+
+        <SeekBar
+            android:id="@+id/DanceabilityBar"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="15dp"
+            android:paddingRight="2dp"
+            android:progressDrawable="@drawable/progresslider"/>
+
+        <TextView
+            android:id="@+id/DanceValueView"
+            android:text="@string/VIBE_APP_ZERO_PARAM"
+            android:textColor="@color/vibe_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"/>
+    </LinearLayout>
+
+
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="70dp"
+        android:onClick="launch"
+        android:text="@string/VIBE_APP_LAUNCH_PLAYLIST"
+        android:textColor="@color/vibe_border"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:background="@drawable/shape"
+        android:layout_below="@+id/parameterLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="-10dp" />
+
+</RelativeLayout>

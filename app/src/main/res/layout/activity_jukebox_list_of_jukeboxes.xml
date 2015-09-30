@@ -15,7 +15,8 @@
         android:layout_height="fill_parent"
         android:layout_marginTop="5dp"
         android:layout_below="@id/toolbar"
-        android:divider="@color/vibe_gray_divider"
+        android:divider="@color/vibe_gray"
+        android:dividerHeight="0.1dp"
         android:background="@color/vibe_dark">
     </ListView>
 

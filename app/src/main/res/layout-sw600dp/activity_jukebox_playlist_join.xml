@@ -13,6 +13,8 @@
         tools:context=".JukeboxPlaylistActivity"
         android:background="@drawable/backgroundsmall">
         <!--android:id="@+id/songList"-->
+        <!-- Circular Progress View (3rd Party) -->
+        <!-- <include layout="@layout/circular_progress_bar" /> -->
 
         <include android:id="@+id/mytoolbar"
             layout="@layout/toolbar" />

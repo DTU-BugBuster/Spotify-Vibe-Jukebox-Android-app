@@ -80,6 +80,7 @@
                         android:background="@android:color/transparent"
                         android:onClick="skipTrackButton" />
                 </LinearLayout>
+
             </LinearLayout>
 
             <ListView

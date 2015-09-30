@@ -53,6 +53,7 @@
 
     <string name="VIBE_APP_NON_PREMIUM_ALERT_TITLE">Account</string>
     <string name="VIBE_APP_ARTIST_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, Join a Jukebox? </string>
+    <string name="VIBE_APP_SERVER_ERROR">Server not reached! please try again. </string>
 
     <!-- Activity Titles -->
     <string name="hello_world">Hello world!</string>
@@ -84,6 +85,8 @@
     <string name="VIBE_APP_DRAWER_ADD_SONG_ITEM">Add a song</string>
     <string name="VIBE_APP_DRAWER_CHANGE_PLAYLIST_NAME_ITEM">Change playlist name</string>
     <string name="VIBE_APP_DRAWER_CREATE_NEW_PLAYLIST_ITEM">Create a new playlist</string>
+    <string name="VIBE_APP_DRAWER_LOGOUT_SPOTIFY">Logout</string>
+
     <string name="VIBE_APP_ITEM">Vibe Item</string>
     <string name="VIBE_APP_ITEM1">Vibe Item1</string>
     <string name="VIBE_APP_ITEM2">Vibe Item2</string>

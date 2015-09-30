@@ -24,62 +24,43 @@
             android:background="@drawable/backgroundsmall">
             <!--android:id="@+id/songList"-->
 
-            <!-- Image and Player View -->
-            <LinearLayout
+            <!-- Image and Refresh button -->
+            <RelativeLayout
                 android:id="@+id/ImageAndPlayerView"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="match_parent">
 
                 <ImageView
                     android:id="@+id/trackArt"
                     android:layout_width="200dp"
                     android:layout_height="200dp"
                     android:src="@color/vibe_dark"
-                    android:layout_marginTop="15dp"
-                    android:layout_gravity="center"/>
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="15dp"/>
 
-                <!-- Music Player -->
-                <LinearLayout
-                    android:id="@+id/playerLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="70dp"
-                    android:orientation="horizontal"
-                    android:gravity="center" >
+                <ImageButton
+                    android:id="@+id/refreshButton"
+                    android:layout_width="50dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_cached_white_36dp"
+                    android:background="@android:color/transparent"
+                    android:onClick="refreshTrackButton"
+                    android:layout_below="@+id/trackArt"
+                    android:layout_alignLeft="@+id/trackArt"
+                    android:layout_alignStart="@+id/trackArt" />
 
-                    <ImageButton
-                        android:id="@+id/refreshButton"
-                        android:layout_width="50dp"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_cached_white_36dp"
-                        android:background="@android:color/transparent"
-                        android:onClick="refreshTrackButton" />
-
-                    <ImageButton
-                        android:id="@+id/playButton"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/play"
-                        android:layout_marginLeft="20dp"
-                        android:layout_marginStart="20dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/roundbutton"
-                        android:onClick="playMusic" />
-
-                    <ImageButton
-                        android:id="@+id/nextTrackButton"
-                        android:layout_width="50dp"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/next"
-                        android:layout_marginLeft="20dp"
-                        android:layout_marginStart="20dp"
-                        android:background="@android:color/transparent"
-                        android:onClick="skipTrackButton" />
-                </LinearLayout>
-            </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/VIBE_APP_REFRESH_LIST"
+                    android:textSize="15sp"
+                    android:textColor="@color/vibe_white"
+                    android:id="@+id/textView"
+                    android:layout_below="@+id/refreshButton"
+                    android:layout_alignRight="@+id/refreshButton"
+                    android:layout_alignEnd="@+id/refreshButton" />
+            </RelativeLayout>
 
             <ListView
                 android:id="@+id/list"
