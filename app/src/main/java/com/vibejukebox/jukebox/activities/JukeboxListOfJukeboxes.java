@@ -20,6 +20,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
@@ -271,6 +272,11 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
         trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
         startActivity(trackListIntent);
+    }
+
+    @Override
+    protected void checkSpotifyProduct(AuthenticationResponse authResponse) {
+
     }
 }
 

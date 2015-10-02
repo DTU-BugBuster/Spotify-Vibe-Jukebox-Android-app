@@ -1,7 +1,6 @@
 package com.vibejukebox.jukebox.service;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -20,7 +19,6 @@ import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
@@ -73,7 +71,7 @@ public class VibeService extends Service {
 
     private String mPlaylistName;
 
-    private AuthenticationResponse mAuthResponse;
+    //private AuthenticationResponse mAuthResponse;
 
     private static final int VIBE_JUKEBOX_OBJECT_CREATION_DONE = 10;
 
@@ -228,7 +226,7 @@ public class VibeService extends Service {
             Log.d(TAG, "onStartCommand  -- Vibe Service");
 
         boolean isGettingLastJukebox = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_SERVICE_START_FETCH, false);
-        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
 
         if(!isGettingLastJukebox){
             mTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
@@ -261,7 +259,7 @@ public class VibeService extends Service {
             Log.d(TAG, "launchActivePlaylist (Service)");
 
         Intent intent = new Intent(getApplicationContext(), JukeboxPlaylistActivity.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);

@@ -91,7 +91,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
 
     /** SPOTIFY Api variables */
-    private AuthenticationResponse mAuthResponse;
+    //private AuthenticationResponse mAuthResponse;
 
     private Player mPlayer;
 
@@ -271,7 +271,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             setContentView(R.layout.activity_jukebox_playlist);
 
             //Spotify Authentication response object
-            mAuthResponse = getIntent().getParcelableExtra("authresponse");
+            //mAuthResponse = getIntent().getParcelableExtra("authresponse");
             initializePlayer();
         } else {
             Log.d(TAG, " -- Joined Jukebox -- ");
@@ -425,6 +425,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(DEBUG)
             Log.d(TAG, "Create New Playlist from drawer, Navigating back...");
 
+        storeAccessToken(getAccessToken());
         NavUtils.navigateUpFromSameTask(this);
     }
 
@@ -472,6 +473,13 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     }
 
     @Override
+    protected void onRestart() {
+        if(DEBUG)
+            Log.d(TAG, "onRestart -- ");
+        super.onRestart();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
@@ -486,7 +494,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                         mPlayer.setConnectivityStatus(connectivity);
                     }
                 } else if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)){
-                    Log.d(TAG, "PHONE AWAKEN");
+                    Log.e(TAG, "PHONE AWOKEN");
                 }
             }
         };
@@ -520,14 +528,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         } else {
             return Connectivity.OFFLINE;
         }
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        if(DEBUG)
-            Log.d(TAG, "onRestart -- ");
-
     }
 
     @Override
@@ -724,11 +724,19 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(DEBUG)
             Log.d(TAG, "updatePlayerUiButtons -- ");
 
-        if(hostUser)
-        {
+        if(hostUser){
             ImageButton playButton = (ImageButton)findViewById(R.id.playButton);
             if(playButton != null)
-                playButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+            {
+                if(mPlayer != null)
+                {
+                    if(mCurrentPlayerState.playing)
+                        playButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+
+                     else
+                        playButton.setImageDrawable(getResources().getDrawable(R.drawable.play));
+                }
+            }
         }
     }
 
@@ -748,6 +756,10 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);
                     mTrackUriHead = mPlayListTrackUris.get(0);
                     mPlayer.play(mTrackUriHead);
+
+                    //Update Player button
+                    ImageButton play = (ImageButton)findViewById(R.id.playButton);
+                    play.setImageDrawable(getResources().getDrawable(R.drawable.pause));
 
                     //Update Album Art
                     getTrackAlbumArt(mPlayListTrackUris.get(0));
@@ -792,13 +804,13 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         spotify.getTrack(strippedURI, new Callback<kaaes.spotify.webapi.android.models.Track>() {
             @Override
             public void success(kaaes.spotify.webapi.android.models.Track track, Response response) {
-                if(DEBUG)
+                if (DEBUG)
                     Log.d(TAG, "Successful call to get Track Art.");
 
                 String url;
                 List<Image> images = track.album.images;
 
-                if(images.size() > 0)
+                if (images.size() > 0)
                     url = images.get(1).url;
                 else
                     url = "";
@@ -923,7 +935,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
             @Override
             public void success(Tracks tracks, Response response) {
-                if(DEBUG)
+                if (DEBUG)
                     Log.d(TAG, "Successful call to get Several tracks from Uri list");
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
@@ -1006,7 +1018,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     @Override
     public void onLoginFailed(Throwable throwable) {
-        Log.d(TAG, "onLoginFailed: " + throwable.getMessage());
+        if(DEBUG)
+            Log.e(TAG, " onLoginFailed: " + throwable.getMessage());
+
+        if(mCurrentPlayerState.playing){
+            mChangeTrack = false;
+            mPlayer.pause();
+        }
+
+        //Credentials have expired, must re-login to Spotify
+        loginToSpotify(this);
     }
 
     @Override
@@ -1056,6 +1077,20 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         }
     }
 
+    @Override
+    protected void checkSpotifyProduct(final AuthenticationResponse authResponse)
+    {
+        if(DEBUG)
+            Log.d(TAG, "checkSpotifyProduct -- ");
+
+
+        //Reset variable set to false in onLoginFailed
+        mChangeTrack = true;
+
+        //Re-login to Spotify
+        mPlayer.login(getAccessToken());
+    }
+
     public void logoutSpotify()
     {
         Log.e(TAG, "logoutSpotify ..... ");
@@ -1072,33 +1107,3 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         finish();
     }
 }
-
-/*
-    private void updatePlayerUiButtons(boolean hostUser)
-    {
-        Log.d(TAG, "updatePlayerUiButtons --->  "+ hostUser);
-        //TODO: Handle deprecated method below
-        ImageButton playButton = (ImageButton)findViewById(R.id.playButton);
-        ImageButton nextTrackButton = (ImageButton)findViewById(R.id.nextTrackButton);
-
-        if(!hostUser){
-            playButton.setVisibility(View.GONE);
-            nextTrackButton.setVisibility(View.GONE);
-
-            ImageButton refreshButton = (ImageButton)findViewById(R.id.refreshButton);
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 60);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-            refreshButton.setBackgroundResource(R.drawable.shape_solid);
-            refreshButton.setLayoutParams(layoutParams);
-        }
-        else
-            playButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
-
-//        ImageButton playButton = (ImageButton)findViewById(R.id.playButton);
-//        if(playButton != null)
-//            playButton.setImageDrawable(getResources().getDrawable(R.drawable.pause));
-    }
-
-
- */

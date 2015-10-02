@@ -1,9 +1,13 @@
 package com.vibejukebox.jukebox.activities;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +15,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.ErrorDialogFragment;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -21,13 +26,24 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.spotify.sdk.android.authentication.AuthenticationClient;
+import com.spotify.sdk.android.authentication.AuthenticationRequest;
+import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
+import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Vibe;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.UserPrivate;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Created by Sergex on 7/26/15.
@@ -38,6 +54,10 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     private static final String TAG = VibeBaseActivity.class.getSimpleName();
     private static final boolean DEBUG = DebugLog.DEBUG;
 
+    public static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
+
+    public static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
+
     private boolean mResolvingError = false;
 
     // Unique tag for the error dialog fragment
@@ -45,6 +65,9 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     // Request code to use when launching the resolution activity
     private static final int REQUEST_RESOLVE_ERROR = 1001;
+
+    /** Request code used to verify if result comes from the login Activity */
+    private static final int SPOTIFY_API_REQUEST_CODE = 2015;
 
     /** ----------------------    Connection and Location Services-----------------------------------*/
     // Milliseconds per second
@@ -236,8 +259,87 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         }
     }
 
-    protected abstract void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList);
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(DEBUG)
+            Log.d(TAG, "onActivityResult -- VibeMainActivity -- ");
+
+        //Check if the result comes from the correct activity
+        if(requestCode == SPOTIFY_API_REQUEST_CODE){
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, data);
+            /** TODO ::::: Testing */
+            //response = getTestResponse(response);
+
+            switch(response.getType()){
+                //Response was successful and contains auth token
+                case TOKEN:
+                    //Successful response, launch activity to choose which playlist will start
+                    storeAccessToken(response.getAccessToken());
+
+                    //Checks if the current logged in user has a premium account
+                    checkSpotifyProduct(response);
+                    break;
+
+                case ERROR:
+                    Log.e(TAG, "Error getting result back from Authentication process.");
+                    break;
+
+                //Most likely auth flow was cancelled
+                default:
+                    break;
+                    //Handle other cases
+            }
+        }
+    }
+
+    protected void storeAccessToken(String accessToken)
+    {
+        if(DEBUG)
+            Log.d(TAG, "storeAuthResponse - ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, accessToken);
+        editor.apply();
+    }
+
+    protected void loginToSpotify(Activity contextActivity)
+    {
+        AuthenticationRequest.Builder builder  =
+                new AuthenticationRequest.Builder(JukeboxApplication.SPOTIFY_API_CLIENT_ID,
+                        AuthenticationResponse.Type.TOKEN,
+                        JukeboxApplication.SPOTIFY_API_REDIRECT_URI);
+
+        builder.setShowDialog(false)
+                .setScopes(new String[]{"user-read-private",
+                        "playlist-read-private",
+                        "playlist-read-collaborative",
+                        "streaming",
+                        "user-library-read"});
+
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(contextActivity, SPOTIFY_API_REQUEST_CODE, request);
+    }
+
+    private AuthenticationResponse getTestResponse(AuthenticationResponse response)
+    {
+        AuthenticationResponse.Builder builder = new AuthenticationResponse.Builder();
+        builder.setExpiresIn(10);
+        builder.setAccessToken(response.getAccessToken());
+        builder.setCode(response.getCode());
+        builder.setType(response.getType());
+        builder.setCode(response.getCode());
+        builder.setState(response.getState());
+        AuthenticationResponse res = builder.build();
+        return res;
+    }
+
+    protected abstract void checkSpotifyProduct(final AuthenticationResponse authResponse);
+
+    protected abstract void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList);
 
     protected void fetchNearbyJukeboxes()
     {
@@ -253,7 +355,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
             @Override
             public void done(List<JukeboxObject> jukeboxList, ParseException e) {
                 if (e == null) {
-                    if(DEBUG)
+                    if (DEBUG)
                         Log.d(TAG, "Number of jukeboxes near: " + jukeboxList.size());
 
                     nearbyJukeboxesFound(jukeboxList);

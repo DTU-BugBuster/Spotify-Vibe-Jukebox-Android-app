@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -20,10 +19,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.spotify.sdk.android.authentication.AuthenticationClient;
+import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.player.Spotify;
 import com.vibejukebox.jukebox.DebugLog;
+import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.R;
+import com.vibejukebox.jukebox.SpotifyLoginInterface;
 import com.vibejukebox.jukebox.Vibe;
 import com.vibejukebox.jukebox.service.VibeService;
 
@@ -48,6 +50,7 @@ import retrofit.client.Response;
  */
 
 public class PlaylistSelectionActivity extends AppCompatActivity
+    implements SpotifyLoginInterface
 {
     private static final String TAG = PlaylistSelectionActivity.class.getSimpleName();
 
@@ -55,17 +58,22 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     private static final int VIBE_GET_SPOTIFY_ARTIST_URI = 1;
 
+    private static final int VIBE_USER_NOT_PREMIUM = 2;
+
     private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
 
     private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
 
-    private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
+    //private static final String SPOTIFY_API_AUTH_RESPONSE = "authresponse";
 
     private static final String SPOTIFY_API_USER_ID = "userID";
 
+    /** Request code used to verify if result comes from the login Activity */
+    private static final int SPOTIFY_API_REQUEST_CODE = 2015;
+
     /** Spotify Api objects */
 
-    private AuthenticationResponse mAuthResponse;
+    //private AuthenticationResponse mAuthResponse;
 
     /** Map to store the names and ids of user playlists */
     //private Map<String, String>mPlayListNamesAndIds;
@@ -81,9 +89,6 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     private String mJukeboxName;
 
-    /** Current location */
-    private Location mCurrentLocation;
-
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -91,10 +96,46 @@ public class PlaylistSelectionActivity extends AppCompatActivity
                 case VIBE_GET_SPOTIFY_ARTIST_URI:
                     getArtistUri((String)msg.obj);
                     return true;
+                case VIBE_USER_NOT_PREMIUM:
+                    showUserNotPremiumDialog();
+                    return true;
             }
             return false;
         }
     });
+
+    private void showUserNotPremiumDialog()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.VIBE_APP_NON_PREMIUM_ALERT_TITLE)
+                .setMessage(R.string.VIBE_APP_USER_NOT_PREMIUM_MSG);
+        builder.setPositiveButton(R.string.YES, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                logoutSpotify();
+            }
+        });
+
+        builder.setNegativeButton(R.string.NO, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                goBackToMain();
+            }
+        });
+
+        //Create and show dialog
+        builder.create().show();
+    }
+
+    private void logoutSpotify()
+    {
+        AuthenticationClient.logout(this);
+    }
+
+    private void goBackToMain()
+    {
+        NavUtils.navigateUpFromSameTask(this);
+    }
 
     private String getCreatedJukeboxId()
     {
@@ -126,9 +167,12 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "onCreate -- ");
 
         // Get the response to obtain the authorization code
-        mAuthResponse = getIntent().getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        //mAuthResponse = getIntent().getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        //mCurrentLocation = getIntent().getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
 
-        mCurrentLocation = getIntent().getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
+        /*if(mAuthResponse != null){
+            Log.e(TAG, "EXPIRES IN ---->  " +  mAuthResponse.getExpiresIn());
+        }*/
 
         //mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
         mJukeboxId = getCreatedJukeboxId();
@@ -146,10 +190,6 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             actionBar.setTitle(R.string.VIBE_APP_GET_YOUR_VIBE);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
-        //TODO: Location
-        if(mCurrentLocation == null)
-            Log.e(TAG, "LOCATION NULL");
     }
 
     @Override
@@ -206,7 +246,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
         //Start the Music Parameter Activity
         Intent intent = new Intent(this, MusicParameterActivty.class);
-        intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
+        //intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
         startActivity(intent);
     }
@@ -248,8 +288,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
         //Starts the activity to view all user playlists
         Intent intent = new Intent(this, JukeboxSavedPlaylists.class);
-        intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
-        intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
+        //intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
         intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
         startActivity(intent);
     }
@@ -298,6 +338,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity
      */
     private void getAndSetCurrentUser()
     {
+        if(DEBUG)
+            Log.d(TAG, "    - -  getAndSetCurrentUser");
+
         final String accessToken = getAccessToken();
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
@@ -322,6 +365,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             @Override
             public void failure(RetrofitError error) {
                 Log.e(TAG, "Failed to get current logged in user...");
+                loginSpotify();
             }
         });
     }
@@ -351,9 +395,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
                     }
                 })
-                .setNegativeButton(R.string.VIBE_APP_CANCEL, new DialogInterface.OnClickListener(){
+                .setNegativeButton(R.string.VIBE_APP_CANCEL, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        Log.d(TAG,"Cancel");
+                        Log.d(TAG, "Cancel");
                     }
                 });
 
@@ -374,7 +418,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         //Start the Music Parameter Activity
         Intent intent = new Intent(this, MusicParameterActivty.class);
         intent.putExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST, artistName);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, jukeboxName);
         startActivity(intent);
@@ -389,10 +433,96 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "fetchLastJukebox -- ");
 
         Intent intent = new Intent(getApplicationContext(), VibeService.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_SERVICE_START_FETCH, true);
 
         //The jukebox gets fetched in the Service
         startService(intent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(DEBUG)
+            Log.d(TAG, "onActivityResult ");
+
+        //Check if the result comes from the correct activity
+        if(requestCode == SPOTIFY_API_REQUEST_CODE){
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, data);
+            switch(response.getType()){
+                //Response was successful and contains auth token
+                case TOKEN:
+                    //Successful response, launch activity to choose which playlist will start
+                    storeAccessToken(response.getAccessToken());
+
+                    //Checks if the current logged in user has a premium account
+                    checkSpotifyProduct();
+                    break;
+
+                case ERROR:
+                    Log.e(TAG, "Error getting result back from Authentication process.");
+                    break;
+
+                //Most likely auth flow was cancelled
+                default:
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void loginSpotify() {
+        AuthenticationRequest.Builder builder  =
+                new AuthenticationRequest.Builder(JukeboxApplication.SPOTIFY_API_CLIENT_ID,
+                        AuthenticationResponse.Type.TOKEN,
+                        JukeboxApplication.SPOTIFY_API_REDIRECT_URI);
+
+        builder.setShowDialog(false)
+                .setScopes(new String[]{"user-read-private",
+                        "playlist-read-private",
+                        "playlist-read-collaborative",
+                        "streaming",
+                        "user-library-read"});
+
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(this, SPOTIFY_API_REQUEST_CODE, request);
+    }
+
+    @Override
+    public void checkSpotifyProduct() {
+        if(DEBUG)
+            Log.d(TAG, "checkSpotifyProduct () -- ");
+
+        SpotifyApi api = new SpotifyApi();
+        api.setAccessToken(getAccessToken());
+
+        SpotifyService spotify = api.getService();
+        spotify.getMe(new Callback<UserPrivate>() {
+            @Override
+            public void success(UserPrivate userPrivate, Response response) {
+                String product = userPrivate.product;
+                if (!product.equals("premium"))
+                    mHandler.sendEmptyMessage(VIBE_USER_NOT_PREMIUM);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, "Error getting current user -> " + error.getMessage());
+                error.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void storeAccessToken(String accessToken)
+    {
+        if(DEBUG)
+            Log.d(TAG, "storeAuthResponse - ");
+
+        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, accessToken);
+        editor.apply();
     }
 }

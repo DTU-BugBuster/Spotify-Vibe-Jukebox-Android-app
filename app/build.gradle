@@ -38,6 +38,10 @@ android {
     }
     productFlavors {
     }
+
+    /*sourceSets{
+        main.java.srcDirs += 'src/main/java/com/vibejukebox.jukebox'
+    }*/
 }
 
 repositories {
@@ -80,6 +84,15 @@ dependencies {
 
     //REST services
     compile 'com.jakewharton:butterknife:6.1.0'
+
+    //Circular ProgressBar
+    compile 'com.github.rahatarmanahmed:circularprogressview:2.3.2'
+
+    //CircularImage Lib
+    compile 'de.hdodenhof:circleimageview:1.2.1'
+
+    //Recycler view
+    compile 'com.android.support:recyclerview-v7:22.1.1'
 
     //compile 'com.google.protobuf:protobuf-java:2.5.0'
     /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {

@@ -84,7 +84,7 @@ public class MusicParameterActivty extends AppCompatActivity
     /**
      * Spotify Api Auth response
      */
-    private AuthenticationResponse mAuthResponse;
+    //private AuthenticationResponse mAuthResponse;
 
     /**
      * Boolean to create playlist based on favorites or an artist
@@ -166,7 +166,7 @@ public class MusicParameterActivty extends AppCompatActivity
         Log.e(TAG, "initValues in Music PARAMETER ACTIVITY");
         Intent intent = getIntent();
         mIsArtistRadio = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
-        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
         mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
         mArtistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST);
 
@@ -269,7 +269,7 @@ public class MusicParameterActivty extends AppCompatActivity
             mPlaylistName = "Vibed Playlist";
 
         Intent intent = new Intent(this, VibeService.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mTracks);

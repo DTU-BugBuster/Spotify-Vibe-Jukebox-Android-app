@@ -34,10 +34,10 @@
 
                 <ImageView
                     android:id="@+id/trackArt"
-                    android:layout_width="250dp"
-                    android:layout_height="250dp"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
                     android:src="@color/vibe_dark"
-                    android:layout_marginTop="75dp"
+                    android:layout_marginTop="60dp"
                     android:layout_gravity="center"/>
 
                 <!-- Music Player -->
@@ -47,7 +47,7 @@
                     android:layout_height="70dp"
                     android:orientation="horizontal"
                     android:gravity="center"
-                    android:layout_marginTop="20dp">
+                    android:layout_marginTop="15dp">
 
                     <ImageButton
                         android:id="@+id/refreshButton"

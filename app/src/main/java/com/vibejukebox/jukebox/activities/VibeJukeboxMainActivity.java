@@ -19,10 +19,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationClient;
-import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
-import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Vibe;
@@ -43,23 +41,16 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
     private static final boolean DEBUG = DebugLog.DEBUG;
 
-    private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
-
-    private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
-
     private static final int VIBE_LAUNCH_PLAYLIST = 100;
 
     private static final int VIBE_USER_NOT_PREMIUM = 200;
-
-    /** Request code used to verify if result comes from the login Activity */
-    private static final int SPOTIFY_API_REQUEST_CODE = 2015;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch(msg.what){
                 case VIBE_LAUNCH_PLAYLIST:
-                    launchPlayListSelection((AuthenticationResponse)msg.obj);
+                    launchPlayListSelection(/*(AuthenticationResponse)msg.obj*/);
                     return true;
                 case VIBE_USER_NOT_PREMIUM:
                     showUserNotPremiumDialog();
@@ -73,24 +64,35 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.VIBE_APP_NON_PREMIUM_ALERT_TITLE)
-                .setMessage(R.string.VIBE_APP_ARTIST_NOT_PREMIUM_MSG);
+                .setMessage(R.string.VIBE_APP_USER_NOT_PREMIUM_MSG);
         builder.setPositiveButton(R.string.YES, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 //Free account type user can join jukebox only
-                joinJukebox();
+                //joinJukebox();
+                logoutSpotify();
             }
         });
 
         builder.setNegativeButton(R.string.NO, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
+                showSuggestionToast();
             }
         });
 
         //Create and show dialog
         builder.create().show();
+    }
+
+    private void logoutSpotify()
+    {
+        AuthenticationClient.logout(this);
+    }
+
+    private void showSuggestionToast()
+    {
+        Toast.makeText(this, R.string.VIBE_APP_JOIN_JUKEBOX_INSTEAD, Toast.LENGTH_LONG).show();
     }
 
     /** ----------------------------    Parse Jukebox  -----------------------------------*/
@@ -102,22 +104,6 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
         Log.e(TAG, "------------------------------------------------ Returning ID: " + jukeboxId);
         return jukeboxId;
-    }
-
-    /**
-     * Stores the Access token from Spotify in the shared preferences
-     * @param accessToken
-     */
-    private void storeAccessToken(String accessToken)
-    {
-        if(DEBUG)
-            Log.d(TAG, "storeAuthResponse - ");
-
-        SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
-        SharedPreferences.Editor editor = preferences.edit();
-
-        editor.putString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, accessToken);
-        editor.apply();
     }
 
     /**
@@ -236,7 +222,8 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         }
 
         //User must login to Spotify account to be able to stream music
-        loginToSpotifyAccount();
+        //loginToSpotifyAccount();TODO , inTEST
+        loginToSpotify(this);
     }
 
     @Override
@@ -246,45 +233,11 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         fetchNearbyJukeboxes();
     }
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data)
-	{
-        super.onActivityResult(requestCode, resultCode, data);
-		if(DEBUG)
-			Log.d(TAG, "onActivityResult -- VibeMainActivity -- ");
-
-        //Check if the result comes from the correct activity
-        if(requestCode == SPOTIFY_API_REQUEST_CODE){
-            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, data);
-            switch(response.getType()){
-                //Response was successful and contains auth token
-                case TOKEN:
-                    //Successful response, launch activity to choose which playlist will start
-                    storeAccessToken(response.getAccessToken());
-
-                    //Checks if the current logged in user has a premium account
-                    checkSpotifyProduct(response);
-                    break;
-
-                case ERROR:
-                    Log.e(TAG, "Error getting result back from Authentication process.");
-                    break;
-
-                //Most likely auth flow was cancelled
-                default:
-                    //Handle other cases
-            }
-        }
-	}
-
-    /**
-     * Function checks the currently logged in user type of account
-     * @param authResponse: Spotify Authentication response of current logged in user
-     */
-    private void checkSpotifyProduct(final AuthenticationResponse authResponse)
+    @Override
+    protected void checkSpotifyProduct(final AuthenticationResponse authResponse)
     {
         if(DEBUG)
-            Log.d(TAG, "checkSpotifyProduct -- ");
+            Log.d(TAG, "checkSpotifyProduct () -- ");
 
         SpotifyApi api = new SpotifyApi();
         api.setAccessToken(authResponse.getAccessToken());
@@ -309,34 +262,13 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     }
 
     /**
-     * Log users with the Spotify authentication flow
-     */
-    private void loginToSpotifyAccount()
-    {
-        AuthenticationRequest.Builder builder =
-                new AuthenticationRequest.Builder(JukeboxApplication.SPOTIFY_API_CLIENT_ID,
-                        AuthenticationResponse.Type.TOKEN,
-                        JukeboxApplication.SPOTIFY_API_REDIRECT_URI);
-
-        builder.setShowDialog(false)
-                .setScopes(new String[]{"user-read-private",
-                "playlist-read-private",
-                "playlist-read-collaborative",
-                "streaming",
-                "user-library-read"});
-
-        AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, SPOTIFY_API_REQUEST_CODE, request);
-    }
-
-    /**
      * Launch Activity to choose starting playlist
      */
-    private void launchPlayListSelection(AuthenticationResponse authResponse)
+    private void launchPlayListSelection(/*AuthenticationResponse authResponse*/)
     {
         Intent intent = new Intent(this, PlaylistSelectionActivity.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, authResponse);
-        intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mLastLocation);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, authResponse);
+        //intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mLastLocation);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, getCreatedJukeboxId());
         startActivity(intent);
     }

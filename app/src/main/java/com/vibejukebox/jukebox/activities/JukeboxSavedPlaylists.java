@@ -2,7 +2,6 @@ package com.vibejukebox.jukebox.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -17,7 +16,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Track;
@@ -46,6 +44,7 @@ import retrofit.client.Response;
 public class JukeboxSavedPlaylists extends AppCompatActivity
 {
     private static final String TAG = JukeboxSavedPlaylists.class.getSimpleName();
+
     private static final boolean DEBUG = DebugLog.DEBUG;
 
     private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
@@ -72,7 +71,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     //TODO: Implement object.
     private Map<String, VibePlaylist> mVibePlaylistObject;
 
-    private AuthenticationResponse mAuthResponse;
+    //private AuthenticationResponse mAuthResponse;
 
     private List<String> mPlaylistTrackUris;
 
@@ -81,8 +80,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     private Map<String, String> mPlaylistImages;
 
     private String mChosenPlaylistName;
-
-    private Location mCurrentLocation;
 
     private String mJukeboxId;
 
@@ -113,7 +110,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
-        Log.e(TAG, "------------------------------------------------------ Returning ID: " +  jukeboxId);
+        Log.e(TAG, "--------------------------------------------------- Returning ID: " +  jukeboxId);
         return jukeboxId;
     }
 
@@ -124,7 +121,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     private String getAccessToken()
     {
         if(DEBUG)
-            Log.d(TAG, "getCreatedJukeboxId -- ");
+            Log.d(TAG, "getAccessToken -- ");
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
@@ -148,12 +145,11 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         }
 
         Intent intent = getIntent();
-        mCurrentLocation = intent.getParcelableExtra(Vibe.VIBE_CURRENT_LOCATION);
 
         // Spotify API variables
         mUserId = intent.getStringExtra(SPOTIFY_API_USER_ID);
 
-        mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
+        //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
         mJukeboxId = getCreatedJukeboxId();
 
         mPlaylistNamesAndIds = new HashMap<>();
@@ -316,7 +312,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                 List<String> ids = new ArrayList<>(mPlaylistNamesAndIds.values());
                 //List<String> ids = new ArrayList<>(mVibePlaylistObject.keySet());
                 String chosenID = ids.get(position);
-                Log.e(TAG, "PLAYLIST ID CHOSEN  -- >   " + chosenID);
 
                 TextView tv = (TextView)v.findViewById(R.id.playlistName);
                 mChosenPlaylistName = tv.getText().toString();
@@ -330,23 +325,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         playlistView.setAdapter(sAdapter);
     }
 
-    /*@Override
-    protected void onListItemClick(ListView l, View v, final int position, long id) {
-        super.onListItemClick(l, v, position, id);
-        if(DEBUG)
-            Log.d(TAG, "onItemClicked -- ");
-
-        List<String> ids = new ArrayList<>(mPlaylistNamesAndIds.values());
-        String chosenID = ids.get(position);
-        Log.e(TAG, "PLAYLIST ID CHOSEN  -- >   " + chosenID);
-
-        TextView tv = (TextView)v.findViewById(R.id.playlistName);
-        mChosenPlaylistName = tv.getText().toString();
-
-        // Create a jukebox with the right name and respective Tracks
-        getPlaylistTracks(chosenID);
-    }*/
-
     /**
      * Launches the service to create a jukebox with the playlist data in Parse backend
      */
@@ -356,9 +334,9 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
             Log.d(TAG, "Starting Jukebox Creation with playlist:  " + playlistName);
 
         Intent intent = new Intent(getApplicationContext(), VibeService.class);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
+        //intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, playlistName);
-        intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
         intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mPlaylistTrackUris);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mPlaylistTracks);
 

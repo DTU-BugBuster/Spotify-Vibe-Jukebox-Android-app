@@ -52,7 +52,8 @@
     <string name="no_nearby_jukeboxes_found"> No nearby jukeboxes found. </string>
 
     <string name="VIBE_APP_NON_PREMIUM_ALERT_TITLE">Account</string>
-    <string name="VIBE_APP_ARTIST_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, Join a Jukebox? </string>
+    <string name="VIBE_APP_USER_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, login with different account? </string>
+    <string name="VIBE_APP_JOIN_JUKEBOX_INSTEAD">You can still join a jukebox and add songs to an active jukebox as a free user! </string>
     <string name="VIBE_APP_SERVER_ERROR">Server not reached! please try again. </string>
 
     <!-- Activity Titles -->

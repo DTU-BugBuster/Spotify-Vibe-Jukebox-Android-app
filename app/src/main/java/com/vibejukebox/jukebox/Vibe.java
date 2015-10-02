@@ -3,16 +3,13 @@ package com.vibejukebox.jukebox;
 
 import android.location.Location;
 import android.net.NetworkInfo.State;
+import android.util.Log;
 
 /**
  * Created by Sergex on 5/27/15.
  */
-public final class Vibe {
-
-    private static final String TAG = Vibe.class.getSimpleName();
-
-    private static final boolean DEBUG = DebugLog.DEBUG;
-
+public final class Vibe
+{
     public static final String VIBE_NEARBY_JUKEBOXES = "NearbyJukeboxes";
 
     public static final String VIBE_CURRENT_LOCATION = "CurrentLocation";
@@ -29,15 +26,13 @@ public final class Vibe {
 
     public static final String VIBE_JUKEBOX_STRING_PREFERENCE = "JukeboxStoredId";
 
-    public static final String VIBE_JUKEBOX_LOCATION_PREFERENCE = "currentLocationObject";
-
     public static final String VIBE_JUKEBOX_ARTIST_RADIO = "ArtistRadio";
+
+    public static final String VIBE_JUKEBOX_START_WITH_ARTIST = "ArtistChosen";
 
     public static final String VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE = "authresponse";
 
     public static final String VIBE_JUKEBOX_PLAYLIST_NAME = "playlistName";
-
-    public static final String VIBE_JUKEBOX_SERVICE_START_NEW = "newJukeboxCreated";
 
     public static final String VIBE_JUKEBOX_SERVICE_START_FETCH = "fetchJukeboxWithID";
 
@@ -76,6 +71,7 @@ public final class Vibe {
 
     public static void setCurrentLocation(Location location)
     {
+        Log.e(" - VIBE CLASS - ", "Location Set:  " + location.getLatitude() + "  " + location.getLongitude());
         mCurrentLocation = location;
     }
 
