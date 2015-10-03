@@ -37,7 +37,7 @@
                     android:layout_width="300dp"
                     android:layout_height="300dp"
                     android:src="@color/vibe_dark"
-                    android:layout_marginTop="60dp"
+                    android:layout_marginTop="50dp"
                     android:layout_gravity="center"/>
 
                 <!-- Music Player -->

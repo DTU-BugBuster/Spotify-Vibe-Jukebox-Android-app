@@ -37,15 +37,16 @@
                     android:layout_height="200dp"
                     android:src="@color/vibe_dark"
                     android:layout_centerHorizontal="true"
-                    android:layout_marginTop="15dp"/>
+                    android:layout_marginTop="10dp"/>
 
                 <ImageButton
                     android:id="@+id/refreshButton"
                     android:layout_width="50dp"
                     android:layout_height="48dp"
                     android:src="@drawable/ic_cached_white_36dp"
-                    android:background="@android:color/transparent"
+                    android:background="@drawable/shape"
                     android:onClick="refreshTrackButton"
+                    android:layout_marginTop="5dp"
                     android:layout_below="@+id/trackArt"
                     android:layout_alignLeft="@+id/trackArt"
                     android:layout_alignStart="@+id/trackArt" />
