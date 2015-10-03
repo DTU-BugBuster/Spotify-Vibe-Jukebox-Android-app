@@ -1,9 +1,12 @@
 package com.vibejukebox.jukebox.activities;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -71,10 +74,6 @@ public class PlaylistSelectionActivity extends AppCompatActivity
     /** Request code used to verify if result comes from the login Activity */
     private static final int SPOTIFY_API_REQUEST_CODE = 2015;
 
-    /** Spotify Api objects */
-
-    //private AuthenticationResponse mAuthResponse;
-
     /** Map to store the names and ids of user playlists */
     //private Map<String, String>mPlayListNamesAndIds;
 
@@ -84,10 +83,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity
     /** Id of the Spotify user account */
     private String mUserId;
 
-    /** Name of the user created Jukebox object */
-    private String mJukeboxId;
-
     private String mJukeboxName;
+
+    private boolean mStateConnected = false;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -174,10 +172,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.e(TAG, "EXPIRES IN ---->  " +  mAuthResponse.getExpiresIn());
         }*/
 
-        //mJukeboxId = getIntent().getStringExtra(Vibe.VIBE_JUKEBOX_ID);
-        mJukeboxId = getCreatedJukeboxId();
-
-        if(mJukeboxId != null)
+        if(getCreatedJukeboxId() != null)
             setContentView(R.layout.activity_playlist_selection_alt);
         else
             setContentView(R.layout.activity_playlist_selection);
@@ -203,6 +198,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity
     protected void onResume()
     {
         super.onResume();
+
+        //Get the current state of network connectivity
+        setConnectivityStatus();
 
         //Sets the current Spotify logged in user
         getAndSetCurrentUser();
@@ -280,8 +278,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "selectListFromUserPlaylists");
         }
 
-        boolean connected = Vibe.getConnectivityStatus();
-        if(!connected){
+        if(!mStateConnected){
             Toast.makeText(this, "Lost Connection to Network, please connect and try again", Toast.LENGTH_LONG).show();
             return;
         }
@@ -440,6 +437,16 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         startService(intent);
     }
 
+    private void setConnectivityStatus(){
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        if(activeNetwork != null)
+            mStateConnected = true; //Vibe.setConnectionState(true);
+        else
+            mStateConnected = false; //Vibe.setConnectionState(false);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -472,6 +479,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     @Override
     public void loginSpotify() {
+        Log.d(TAG, " -- loginSpotify -- ");
+
         AuthenticationRequest.Builder builder  =
                 new AuthenticationRequest.Builder(JukeboxApplication.SPOTIFY_API_CLIENT_ID,
                         AuthenticationResponse.Type.TOKEN,
