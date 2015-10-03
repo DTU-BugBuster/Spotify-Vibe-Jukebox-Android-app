@@ -25,6 +25,7 @@ import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Track;
+import com.vibejukebox.jukebox.Vibe;
 import com.vibejukebox.jukebox.adapters.SongListAdapter;
 
 import java.util.ArrayList;
@@ -309,10 +310,13 @@ public class MusicSearchActivity extends ListActivity
 		if(DEBUG)
 			Log.d(TAG, "displayUpdatedPlaylist -- ");
 
+        //TODO: cleanup function
 		Intent intent = new Intent(this, JukeboxPlaylistActivity.class);
         //intent.putExtra("position", trackPosition);
-		intent.putParcelableArrayListExtra("tracks", (ArrayList<Track>) mQueueTracks);
-		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+		//intent.putParcelableArrayListExtra("tracks", (ArrayList<Track>) mQueueTracks);
+		intent.putExtra(Vibe.VIBE_JUKEBOX_CALL_REFRESH, false);
+        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+
 		//mProgressDialog.dismiss();
 		startActivity(intent);
 		finish();

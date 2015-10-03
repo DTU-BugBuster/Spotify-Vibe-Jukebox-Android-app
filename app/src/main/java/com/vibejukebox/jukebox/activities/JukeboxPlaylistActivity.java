@@ -122,11 +122,13 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     /** Side drawer Order of items */
 
-    private static final int VIBE_CHANGE_PLAYLIST_NAME_DRAWER = 1;
+    private static final int VIBE_NAVIGATE_HOME = 1;
 
-    private static final int VIBE_CREATE_NEW_PLAYLIST_DRAWER = 2;
+    private static final int VIBE_CHANGE_PLAYLIST_NAME_DRAWER = 2;
 
-    private static final int VIBE_LOGOUT_SPOTIFY = 3;
+    private static final int VIBE_CREATE_NEW_PLAYLIST_DRAWER = 3;
+
+    private static final int VIBE_LOGOUT_SPOTIFY = 4;
 
     private String mTrackUriHead;
 
@@ -135,6 +137,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private boolean mChangeTrack = true;
 
     private boolean mIsActiveUser = false;
+
+    private boolean mRefresh = true;
 
     private ListView songListView;
 
@@ -344,6 +348,9 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private void createDrawerUi(boolean isActive)
     {
         mDrawerItems.clear();
+        mDrawerItems.add(new DrawerItem(getResources().getString(R.string.VIBE_APP_DRAWER_HOME),
+                R.drawable.ic_home_white_24dp));
+
         mDrawerItems.add(new DrawerItem(getResources().getString(R.string.VIBE_APP_DRAWER_CHANGE_PLAYLIST_NAME_ITEM),
                 R.drawable.ic_mode_edit_white_36dp));
 
@@ -374,6 +381,9 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch(position){
+                    case VIBE_NAVIGATE_HOME:
+                        navigateHome();
+                        break;
                     case VIBE_CHANGE_PLAYLIST_NAME_DRAWER:
                         changeJukeboxNameDialog();
                         break;
@@ -418,6 +428,14 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     public boolean onPrepareOptionsMenu(Menu menu) {
         Log.e(TAG, "onPrepareOptionsMenu -- ");
         return super.onPrepareOptionsMenu(menu);
+    }
+
+    private void navigateHome()
+    {
+        Intent intent = new Intent(this, VibeJukeboxMainActivity.class);
+        startActivity(intent);
+
+        finish();
     }
 
     private void createNewPlaylistFromDrawer()
@@ -473,13 +491,25 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     }
 
     @Override
+    protected void onNewIntent(Intent intent)
+    {
+        if(DEBUG)
+            Log.d(TAG, "onNewIntent -- ");
+
+        mRefresh = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_CALL_REFRESH, true);
+        getJukeboxFromCloud(false);
+    }
+
+    @Override
     protected void onRestart() {
         super.onRestart();
         if(DEBUG)
             Log.d(TAG, "onRestart -- ");
 
-        //Refresh Jukebox from cloud when user navigates back to app
-        refreshJukebox();
+        //Refresh Jukebox from cloud when user navigates back to app.
+        //Jukebox is not refreshed when navigating back from adding a song.
+        if(mRefresh)
+            refreshJukebox();
     }
 
     @Override
@@ -511,6 +541,14 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);
             mPlayer.addConnectionStateCallback(JukeboxPlaylistActivity.this);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        //Set to true to refresh jukebox when user navigates back to app.
+        mRefresh = true;
     }
 
     /**
@@ -606,14 +644,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     @Override
     protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList) {
         /** Not needed in this Activity */
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent)
-    {
-        if(DEBUG)
-            Log.d(TAG, "onNewIntent -- ");
-        getJukeboxFromCloud(false);
     }
 
     /**

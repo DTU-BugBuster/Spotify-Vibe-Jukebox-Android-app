@@ -60,7 +60,7 @@ public class DrawerListAdapter extends BaseAdapter
     public boolean isEnabled(int position)
     {
         //Log.d(TAG, "isEnabled (Drawer) position:  " + position);
-        if(position == 0 && !isActiveJukebox){
+        if(position == 1 && !isActiveJukebox){
             return false;
         } else {
             return true;
@@ -81,7 +81,7 @@ public class DrawerListAdapter extends BaseAdapter
         //Action added to side drawer pane
         TextView titleView = (TextView) view.findViewById(R.id.title);
         titleView.setText( mDrawerItems.get(position).mTitle);
-        if(position == 0 && !isActiveJukebox){
+        if(position == 1 && !isActiveJukebox){
             titleView.setTextColor(mContext.getResources().getColor(R.color.vibe_blue_grey));
         }
 

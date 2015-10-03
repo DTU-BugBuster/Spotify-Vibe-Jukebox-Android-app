@@ -153,8 +153,6 @@ public class MusicParameterActivty extends AppCompatActivity
     protected void onResume()
     {
         super.onResume();
-
-        Log.e(TAG, "onResume");
         if(!mIsArtistRadio){
             mTrackUris = new ArrayList<>();
             getSavedTracks();
@@ -163,14 +161,11 @@ public class MusicParameterActivty extends AppCompatActivity
 
     private void initValues()
     {
-        Log.e(TAG, "initValues in Music PARAMETER ACTIVITY");
         Intent intent = getIntent();
         mIsArtistRadio = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
         //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
         mPlaylistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
         mArtistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST);
-
-        Log.e(TAG, "ARTIST RADIO:   " + mIsArtistRadio);
     }
 
     private void initUi()
@@ -283,7 +278,7 @@ public class MusicParameterActivty extends AppCompatActivity
     private void requestArtistRadio()
     {
         if(DEBUG)
-            Log.e(TAG, "requestArtistRadio -- " + mArtistName);
+            Log.d(TAG, "requestArtistRadio with Uri -- " + mArtistName);
 
         // If the user did not touch a parameter slider that parameter is not taken into
         //account for the playlist generation
@@ -301,7 +296,8 @@ public class MusicParameterActivty extends AppCompatActivity
         SongBackendApi.getInstance().getBackendService().requestTracksFromFavorites(songTask, new Callback<SongResponse>() {
             @Override
             public void success(SongResponse songResponse, Response response) {
-                Log.d(TAG, "Successful call to Artist radio backend service. ");
+                if(DEBUG)
+                    Log.d(TAG, "Successful call to Artist radio backend service. ");
                 mProgressDialog.cancel();
                 parseBackendResponse(songResponse);
             }
@@ -312,6 +308,12 @@ public class MusicParameterActivty extends AppCompatActivity
                 Log.e(TAG, "Failed call to Artist radio backend playlist service.");
                 Log.e(TAG, "Message -- > " + error.getMessage());
                 error.printStackTrace();
+
+                //Sets all parameters back to "nothing"
+                resetSliderParameters();
+
+                //Displays toast to user that a server error has occured
+                mHandler.sendEmptyMessage(VIBE_SERVER_ERROR);
             }
         });
     }

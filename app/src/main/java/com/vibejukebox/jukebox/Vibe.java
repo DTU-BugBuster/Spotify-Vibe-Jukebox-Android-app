@@ -36,6 +36,8 @@ public final class Vibe
 
     public static final String VIBE_JUKEBOX_SERVICE_START_FETCH = "fetchJukeboxWithID";
 
+    public static final String VIBE_JUKEBOX_CALL_REFRESH = "refresh";
+
     private static Location mCurrentLocation;
 
     private static int MODE_PRIVATE = 1;
