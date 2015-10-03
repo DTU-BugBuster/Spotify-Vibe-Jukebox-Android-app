@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/backgroundsmall"
+    android:orientation="vertical">
+
+    <include android:id="@+id/mytoolbar"
+        layout="@layout/toolbar" />
+
+    <android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/drawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <!-- The main content view -->
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:background="@drawable/backgroundsmall">
+            <!--android:id="@+id/songList"-->
+
+            <!-- Image and Refresh button -->
+            <RelativeLayout
+                android:id="@+id/ImageAndPlayerView"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/trackArt"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:src="@color/vibe_dark"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="60dp"/>
+
+                <ImageButton
+                    android:id="@+id/refreshButton"
+                    android:layout_width="50dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_cached_white_36dp"
+                    android:background="@android:color/transparent"
+                    android:onClick="refreshTrackButton"
+                    android:layout_below="@+id/trackArt"
+                    android:layout_alignLeft="@+id/trackArt"
+                    android:layout_alignStart="@+id/trackArt" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/VIBE_APP_REFRESH_LIST"
+                    android:textSize="15sp"
+                    android:textColor="@color/vibe_white"
+                    android:id="@+id/textView"
+                    android:layout_below="@+id/refreshButton"
+                    android:layout_alignRight="@+id/refreshButton"
+                    android:layout_alignEnd="@+id/refreshButton" />
+            </RelativeLayout>
+
+            <ListView
+                android:id="@+id/list"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="fill_parent"
+                android:dividerHeight="0.1dp"
+                android:divider="@color/vibe_gray_divider"
+                android:background="@color/vibe_dark" >
+            </ListView>
+
+        </LinearLayout>
+
+        <!-- The navigation drawer -->
+        <ListView android:id="@+id/left_drawer"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:choiceMode="singleChoice"
+            android:divider="@color/vibe_gray_divider"
+            android:dividerHeight="0.1dp"
+            android:background="@drawable/backgroundsmall"/>
+    </android.support.v4.widget.DrawerLayout>
+
+</LinearLayout>
