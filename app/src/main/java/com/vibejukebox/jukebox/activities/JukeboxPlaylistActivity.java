@@ -474,9 +474,12 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     @Override
     protected void onRestart() {
+        super.onRestart();
         if(DEBUG)
             Log.d(TAG, "onRestart -- ");
-        super.onRestart();
+
+        //Refresh Jukebox from cloud when user navigates back to app
+        refreshJukebox();
     }
 
     @Override
@@ -618,6 +621,11 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
      * @param view
      */
     public void refreshTrackButton(View view) {
+        refreshJukebox();
+    }
+
+    private void refreshJukebox()
+    {
         getJukeboxFromCloud(false);
     }
 
