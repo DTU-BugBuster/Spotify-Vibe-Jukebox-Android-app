@@ -22,11 +22,17 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.parse.GetCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.player.Connectivity;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.JukeboxApplication;
+import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.SpotifyLoginInterface;
 import com.vibejukebox.jukebox.Vibe;
@@ -63,6 +69,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     private static final int VIBE_USER_NOT_PREMIUM = 2;
 
+    private static final int VIBE_JUKEBOX_NO_NETWORK = 3;
+
     private static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
 
     private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
@@ -96,6 +104,9 @@ public class PlaylistSelectionActivity extends AppCompatActivity
                     return true;
                 case VIBE_USER_NOT_PREMIUM:
                     showUserNotPremiumDialog();
+                    return true;
+                case VIBE_JUKEBOX_NO_NETWORK:
+                    showNoNetworkToast();
                     return true;
             }
             return false;
@@ -158,6 +169,18 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
     }
 
+    /**
+     * Function stores a null jukebox id to have a new one be created in case the stored one has been corrupted.
+     */
+    private void storeNullJukeboxID()
+    {
+        SharedPreferences preferences = getSharedPreferences(Vibe.VIBE_JUKEBOX_PREFERENCES, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(Vibe.VIBE_JUKEBOX_STRING_PREFERENCE, null);
+        editor.apply();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -192,6 +215,14 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         super.onRestart();
         if(DEBUG)
             Log.d(TAG, "onRestart -- ");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Checks if jukebox object still valid in the backend
+        checkJukebox();
     }
 
     @Override
@@ -242,11 +273,12 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "createPlaylistFromUserFavorites");
         }
 
-        //Start the Music Parameter Activity
-        Intent intent = new Intent(this, MusicParameterActivty.class);
-        //intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
-        intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
-        startActivity(intent);
+        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE){
+            //Start the Music Parameter Activity
+            Intent intent = new Intent(this, MusicParameterActivty.class);
+            intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
+            startActivity(intent);
+        }
     }
 
     /**
@@ -259,13 +291,16 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "getArtistRadioTracks");
         }
 
-        //Input artist and launch Parameter activity
-        setArtistRadioDialog();
+        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE){
+            //Input artist and launch Parameter activity
+            setArtistRadioDialog();
+        }
     }
 
     public void startLastTimeJukebox(View view)
     {
-        fetchLastJukebox();
+        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+            fetchLastJukebox();
     }
 
     /**
@@ -278,17 +313,42 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             Log.d(TAG, "selectListFromUserPlaylists");
         }
 
-        if(!mStateConnected){
+        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE){
+            //Starts the activity to view all user playlists
+            Intent intent = new Intent(this, JukeboxSavedPlaylists.class);
+            intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
+            startActivity(intent);
+        } else {
             Toast.makeText(this, "Lost Connection to Network, please connect and try again", Toast.LENGTH_LONG).show();
             return;
         }
+    }
 
-        //Starts the activity to view all user playlists
-        Intent intent = new Intent(this, JukeboxSavedPlaylists.class);
-        //intent.putExtra(SPOTIFY_API_AUTH_RESPONSE, mAuthResponse);
-        //intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mCurrentLocation);
-        intent.putExtra(SPOTIFY_API_USER_ID, mUserId);
-        startActivity(intent);
+    /**
+     * Function checks if the jukebox object associated with the stored jukebox ID is valid.
+     */
+    private void checkJukebox()
+    {
+        if(DEBUG)
+            Log.d(TAG, "checkJukebox -- " );
+
+        final String jukeboxID = getCreatedJukeboxId();
+
+        ParseObject.registerSubclass(JukeboxObject.class);
+        ParseQuery<JukeboxObject> query = ParseQuery.getQuery("JukeBox");
+        query.getInBackground(jukeboxID, new GetCallback<JukeboxObject>() {
+            @Override
+            public void done(JukeboxObject jukebox, ParseException e) {
+                if (e == null) {
+                    Log.d(TAG, "Successfully retrieved Jukebox from cloud with ID:  " + jukeboxID);
+
+                } else {
+                    Log.e(TAG, "Jukebox stored no longer valid, setting ID to null. " + e.getMessage());
+                    if (getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+                        storeNullJukeboxID();
+                }
+            }
+        });
     }
 
     private void getArtistUri(String artist)
@@ -330,6 +390,13 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         Toast.makeText(this, R.string.VIBE_APP_INVALID_ARTIST_QUERY, Toast.LENGTH_LONG).show();
     }
 
+    private void showNoNetworkToast()
+    {
+        Toast.makeText(getApplicationContext(),
+                getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
+                Toast.LENGTH_LONG).show();
+    }
+
     /**
      * Get the currently logged in user id from Spotify
      */
@@ -362,9 +429,25 @@ public class PlaylistSelectionActivity extends AppCompatActivity
             @Override
             public void failure(RetrofitError error) {
                 Log.e(TAG, "Failed to get current logged in user...");
-                loginSpotify();
+                if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+                    loginSpotify();
+                else
+                    mHandler.sendEmptyMessage(VIBE_JUKEBOX_NO_NETWORK);
             }
         });
+    }
+
+    private Connectivity getNetworkConnectivity(Context context)
+    {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+
+        if(activeNetwork != null && activeNetwork.isConnected()){
+            return Connectivity.fromNetworkType(activeNetwork.getType());
+        } else {
+            return Connectivity.OFFLINE;
+        }
     }
 
     private void setArtistRadioDialog()
@@ -415,7 +498,6 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         //Start the Music Parameter Activity
         Intent intent = new Intent(this, MusicParameterActivty.class);
         intent.putExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST, artistName);
-        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, jukeboxName);
         startActivity(intent);
@@ -437,7 +519,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity
         startService(intent);
     }
 
-    private void setConnectivityStatus(){
+    private void setConnectivityStatus()
+    {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();

@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
@@ -80,8 +81,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     private Map<String, String> mPlaylistImages;
 
     private String mChosenPlaylistName;
-
-    private String mJukeboxId;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -150,7 +149,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
         mUserId = intent.getStringExtra(SPOTIFY_API_USER_ID);
 
         //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
-        mJukeboxId = getCreatedJukeboxId();
+        //mJukeboxId = getCreatedJukeboxId();
 
         mPlaylistNamesAndIds = new HashMap<>();
         mVibePlaylistObject = new HashMap<>();
@@ -235,7 +234,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
             @Override
             public void failure(RetrofitError error) {
-                Log.e(TAG, "Failed getting user playlists..." + error.getMessage());
+                Log.e(TAG, "Failed getting user playlists... " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
+                        Toast.LENGTH_LONG).show();
             }
         });
     }

@@ -324,6 +324,11 @@ public class MusicParameterActivty extends AppCompatActivity
         if(DEBUG)
             Log.d(TAG, "requestRetroPlaylist --> " + mAcousticValue + " " + mEnergyValue + " " + mDanceValue);
 
+        if(mTrackUris.size() == 0) {
+            Toast.makeText(MusicParameterActivty.this, R.string.VIBE_APP_NO_SAVED_SONGS, Toast.LENGTH_LONG).show();
+            return;
+        }
+
         //Get Correct parameters from sliders
         Params params = getParametersIfZero();
 

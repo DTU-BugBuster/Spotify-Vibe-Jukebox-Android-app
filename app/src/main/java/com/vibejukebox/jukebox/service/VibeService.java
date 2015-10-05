@@ -193,18 +193,20 @@ public class VibeService extends Service {
         SharedPreferences.Editor editor = preferences.edit();
 
         editor.putString(VIBE_JUKEBOX_STRING_PREFERENCE, id);
-        editor.commit();
+        editor.apply();
     }
 
     private ParseGeoPoint getGeoPointFromMyLocation(Location location)
     {
-        if(mLocation != null)
+        if(location != null) {
+            mLocation = location;
             return new ParseGeoPoint(location.getLatitude(), location.getLongitude());
+        }
         else {
-            Log.e(TAG, "An error occured getting the correct location object.");
             return null;
         }
     }
+
     /** ------------------------------------------------------------------------------------------------------*/
 
     @Override
@@ -302,6 +304,8 @@ public class VibeService extends Service {
 
                 } else {
                     Log.e(TAG, "Error fetching jukebox object, ID: " + mJukeboxId);
+                    Log.e(TAG, e.getMessage());
+
                     Toast.makeText(getApplicationContext(),
                             getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
                             Toast.LENGTH_LONG).show();

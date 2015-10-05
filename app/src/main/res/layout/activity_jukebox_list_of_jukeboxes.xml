@@ -9,15 +9,42 @@
     <include android:id="@+id/toolbar"
         layout="@layout/toolbar" />
 
+    <LinearLayout
+        android:id="@+id/noJukeboxNearbyLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_below="@id/toolbar">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/no_nearby_jukeboxes_found"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="40dp"
+            android:gravity="center"/>
+
+        <Button
+            android:layout_width="180dp"
+            android:layout_height="60dp"
+            android:background="@drawable/shape"
+            android:text="@string/VIBE_APP_CREATE_JUKEBOX"
+            android:textColor="@color/vibe_border"
+            android:onClick="createJukebox"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"/>
+    </LinearLayout>
+
     <ListView 
         android:id="@+id/nearJukeBokesView"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
         android:layout_marginTop="5dp"
-        android:layout_below="@id/toolbar"
+        android:layout_below="@id/noJukeboxNearbyLayout"
         android:divider="@color/vibe_gray"
         android:dividerHeight="0.1dp"
-        android:background="@color/vibe_dark">
+        android:background="@color/vibe_dark" >
     </ListView>
 
 </RelativeLayout>

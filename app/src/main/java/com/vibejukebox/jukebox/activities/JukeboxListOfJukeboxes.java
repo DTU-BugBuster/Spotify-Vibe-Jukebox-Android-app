@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -94,7 +95,15 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         }
 	}
 
-	@Override
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if(mLocationServicesConnected){
+            fetchNearbyJukeboxes();
+        }
+    }
+
+    @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.jukebox_list_of_jukeboxes, menu);
@@ -152,12 +161,22 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         setJukeboxList(jukeboxList);
         List<String> nearbyJukeboxes = new ArrayList<>();
 
-        for(JukeboxObject jukebox : jukeboxList){
-            nearbyJukeboxes.add(jukebox.getName());
-        }
+        ViewGroup layout = (ViewGroup)findViewById(R.id.noJukeboxNearbyLayout);
+        if(jukeboxList.size() > 0){
+            layout.setVisibility(View.GONE);
+            for(JukeboxObject jukebox : jukeboxList){
+                nearbyJukeboxes.add(jukebox.getName());
+            }
 
-        //Display the list of jukeboxes nearby user
-        updateJukeboxList(nearbyJukeboxes);
+            //Display the list of jukeboxes nearby user
+            updateJukeboxList(nearbyJukeboxes);
+        } else {
+            layout = (ViewGroup)findViewById(R.id.noJukeboxNearbyLayout);
+            layout.setVisibility(View.VISIBLE);
+
+            ListView nearbyJukeboxesView = (ListView)findViewById(R.id.nearJukeBokesView);
+            nearbyJukeboxesView.setVisibility(View.GONE);
+        }
     }
 
 	private void showPoorConnectionToast()
@@ -169,6 +188,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
     {
         // Set the nearby jukebox names
         ListView nearbyJukeboxesView = (ListView)findViewById(R.id.nearJukeBokesView);
+        nearbyJukeboxesView.setVisibility(View.VISIBLE);
         nearbyJukeboxesView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nearbyJukeboxNames){
             @Override
             public View getView(int position, View convertView, ViewGroup parent)
@@ -272,6 +292,15 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
         trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
         startActivity(trackListIntent);
+    }
+
+    public void createJukebox(View view){
+        loginToSpotify(this);
+    }
+
+    @Override
+    protected void loginToSpotify(Activity contextActivity) {
+        super.loginToSpotify(contextActivity);
     }
 
     @Override

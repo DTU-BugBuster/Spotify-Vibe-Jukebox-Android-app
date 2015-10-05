@@ -7,6 +7,7 @@
     <string name="VIBE_APP_START_JUKEBOX">Start Jukebox</string>
     <string name="VIBE_APP_CREATE_JUKEBOX">Create Jukebox</string>
     <string name="VIBE_APP_JOIN_JUKEBOX">Join Jukebox</string>
+    <string name="VIBE_APP_OFFLINE">Network Connection Offline</string>
 
     <string name="VIBE_APP_MY_MUSIC">My Music</string>
     <string name="VIBE_APP_GET_YOUR_VIBE">Get your Vibe</string>
@@ -48,13 +49,17 @@
 
     <string name="jukebox_empty">Jukebox is empty, add songs above. </string>
     <string name="jukebox_add_songs_to_host"> Jukebox ready to start getting songs added! </string>
-    <string name="nearby_jukeboxes_found"> nearby jukeboxes found... </string>
+    <string name="nearby_jukeboxes_found"> nearby jukeboxes found &#8230; </string>
     <string name="no_nearby_jukeboxes_found"> No nearby jukeboxes found. </string>
+    <string name="VIBE_APP_CONNECTION_LOST">Connection lost, check your network settings!</string>
 
     <string name="VIBE_APP_NON_PREMIUM_ALERT_TITLE">Account</string>
     <string name="VIBE_APP_USER_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, login with different account? </string>
     <string name="VIBE_APP_JOIN_JUKEBOX_INSTEAD">You can still join a jukebox and add songs to an active jukebox as a free user! </string>
     <string name="VIBE_APP_SERVER_ERROR">Server not reached! please try again. </string>
+    <string name="VIBE_APP_NO_NEARBY_JUKEBOXES_MSG">No one around to join just yet, Start the party creating a jukebox yourself! </string>
+
+    <string name="VIBE_APP_NO_SAVED_SONGS">Sorry, you have no saved songs in Spotify yet! </string>
 
     <!-- Activity Titles -->
     <string name="hello_world">Hello world!</string>

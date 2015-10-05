@@ -45,6 +45,8 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
     private static final int VIBE_USER_NOT_PREMIUM = 200;
 
+    private int mNumJukeboxesNear = 0;
+
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -141,14 +143,6 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
             Log.d(TAG, "onStart -- ");
     }
 
-    @Override
-    protected void onStop()
-    {
-        super.onStop();
-        if(DEBUG)
-            Log.d(TAG, "onStop -- ");
-    }
-
     private void setConnectivityStatus(){
         ConnectivityManager connectivityManager =
                 (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -202,10 +196,13 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
     private void joinJukebox()
     {
-        Intent intent = new Intent(this, JukeboxListOfJukeboxes.class);
-        startActivity(intent);
+        if(mNumJukeboxesNear > 0){
+            Intent intent = new Intent(this, JukeboxListOfJukeboxes.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, R.string.VIBE_APP_NO_NEARBY_JUKEBOXES_MSG, Toast.LENGTH_LONG).show();
+        }
     }
-
 
     /**
      * Function called when a user wants to start a playlist of its own
@@ -267,8 +264,6 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     private void launchPlayListSelection(/*AuthenticationResponse authResponse*/)
     {
         Intent intent = new Intent(this, PlaylistSelectionActivity.class);
-        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, authResponse);
-        //intent.putExtra(Vibe.VIBE_CURRENT_LOCATION, mLastLocation);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, getCreatedJukeboxId());
         startActivity(intent);
     }
@@ -277,6 +272,8 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList)
     {
         int numberOfJukeboxFound = jukeboxList.size();
+        mNumJukeboxesNear = numberOfJukeboxFound;
+
         final TextView tv = (TextView)findViewById(R.id.nearbyJukeboxesTextView);
 
         if(numberOfJukeboxFound == 0)

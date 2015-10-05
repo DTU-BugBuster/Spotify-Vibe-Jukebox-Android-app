@@ -38,6 +38,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.spotify.sdk.android.authentication.AuthenticationClient;
@@ -456,8 +457,17 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             Log.d(TAG, "Change Name Dialog");
 
         // Use the Builder class for convenient dialog construction
-        LayoutInflater inflator = LayoutInflater.from(this);
-        final View view = inflator.inflate(R.layout.dialog_layout, null);
+        LayoutInflater inflater = LayoutInflater.from(this);
+        final View view = inflater.inflate(R.layout.dialog_layout, null);
+
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            CharSequence title = actionBar.getTitle();
+            if(title != null) {
+                EditText name = (EditText)view.findViewById(R.id.newJukeboxNameText);
+                name.setText(title.toString());
+            }
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(view)
@@ -524,6 +534,13 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                         Connectivity connectivity = getNetworkConnectivity(getBaseContext());
                         Log.d(TAG, "Network state changed:  " + connectivity.toString());
                         mConnectivity = connectivity.toString();
+
+                        //Display to the user if connectivity status is offline
+                        if(mConnectivity.equals("Offline"))
+                            displayConnectivity(true);
+                        else
+                            displayConnectivity(false);
+
                         mPlayer.setConnectivityStatus(connectivity);
                     }
                 } else if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)){
@@ -540,6 +557,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         if(mPlayer != null && mPlayer.isInitialized()){
             mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);
             mPlayer.addConnectionStateCallback(JukeboxPlaylistActivity.this);
+        }
+    }
+
+    private void displayConnectivity(boolean isOffline)
+    {
+        TextView offlineBar = (TextView)findViewById(R.id.offlineBar);
+        if(isOffline){
+            offlineBar.setVisibility(View.VISIBLE);
+        } else {
+            offlineBar.setVisibility(View.GONE);
         }
     }
 
@@ -743,6 +770,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
         if(mConnectivity.equals("Offline")){
             Log.d(TAG,"Connection Lost...");
+            Toast.makeText(this, R.string.VIBE_APP_CONNECTION_LOST, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -977,8 +1005,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     Log.d(TAG, "Successful call to get Several tracks from Uri list");
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
-                    if (DEBUG)
-                        Log.d(TAG, "Track name:  " + track.name);
+                    /*if (DEBUG)
+                        Log.d(TAG, "Track name:  " + track.name);*/
                     Track vibeTrack = new Track(track.artists.get(0).name, track.name);
                     vibeTrack.setTrackName(track.name);
                     vibeTrack.setArtistName(track.artists.get(0).name);
@@ -1088,9 +1116,14 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         switch(eventType){
             case TRACK_CHANGED:
                 if(DEBUG) Log.d(TAG, "TRACK_CHANGED");
+                if(!mPlayer.isLoggedIn())
+                    Log.e(TAG, "NOT logged in");
+                if(mPlayer.isShutdown())
+                    Log.e(TAG, "SHUTDOWN");
                 break;
             case PLAY:
                 if(DEBUG) Log.d(TAG, "PLAY_EVENT");
+
                 break;
             case PAUSE:
                 Log.d(TAG, "PAUSE_EVENT  " + mChangeTrack);
