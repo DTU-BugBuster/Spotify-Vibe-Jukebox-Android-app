@@ -128,6 +128,18 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         if(DEBUG)
             Log.d(TAG, "onCreate()");
 
+        // Possible work around for market launches. See http://code.google.com/p/android/issues/detail?id=2373
+        // for more details. Essentially, the market launches the main activity on top of other activities.
+        // we never want this to happen. Instead, we check if we are the root and if not, we finish.
+        if(!isTaskRoot()){
+            final Intent intent = getIntent();
+            if(intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN.equals(intent.getAction())){
+                Log.w(TAG, getResources().getString(R.string.VIBE_NOT_ROOT_TASK));
+                finish();
+                return;
+            }
+        }
+
 		setContentView(R.layout.activity_jukebox_main);
         setConnectivityStatus();
 

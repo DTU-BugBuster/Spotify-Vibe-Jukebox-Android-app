@@ -8,6 +8,7 @@
     <string name="VIBE_APP_CREATE_JUKEBOX">Create Jukebox</string>
     <string name="VIBE_APP_JOIN_JUKEBOX">Join Jukebox</string>
     <string name="VIBE_APP_OFFLINE">Network Connection Offline</string>
+    <string name="VIBE_NOT_ROOT_TASK">Main Activity is not the root.  Finishing Main Activity instead of launching.</string>
 
     <string name="VIBE_APP_MY_MUSIC">My Music</string>
     <string name="VIBE_APP_GET_YOUR_VIBE">Get your Vibe</string>

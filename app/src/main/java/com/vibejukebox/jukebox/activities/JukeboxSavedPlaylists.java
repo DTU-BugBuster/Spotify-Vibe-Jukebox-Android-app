@@ -209,12 +209,13 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                 Log.d(TAG, "Successful call to get User playlists.");
                 for (PlaylistSimple playlist : playlistSimplePager.items) {
 
-                    //If the playlist is empty, just move along
-                    if (playlist.tracks.total <= 0)
+                    // Playlists with local tracks not supported yet.
+                    // For this We check if playlist has images or also if the playlist is empty,
+                    // just move along
+                    if (playlist.tracks.total <= 0 || playlist.images.isEmpty())
                         continue;
 
                     //mPlaylists.add(playlist.name);
-
                     //TODO: (In test) Sort out if object will be used
                     VibePlaylist vPlayListObject = new VibePlaylist(playlist.id, playlist.name, playlist.owner.id);
                     vPlayListObject.setNumOfTracks(playlist.tracks.total);
@@ -265,16 +266,16 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
                 Log.d(TAG, "Successful call to get Playlist tracks");
                 for (PlaylistTrack track : playlistTrackPager.items) {
                     Log.d(TAG, "Track:  " + track.track.name);
-
                     //Local tracks not supported, yet.
-                    if(!track.is_local)
+                    if(!track.is_local) {
                         mPlaylistTrackUris.add(track.track.uri);
 
-                    List<ArtistSimple> artistSimple = new ArrayList<>(track.track.artists);
-                    Track song = new Track();
-                    song.setArtistName(artistSimple.get(0).name);
-                    song.setTrackName(track.track.name);
-                    mPlaylistTracks.add(song);
+                        List<ArtistSimple> artistSimple = new ArrayList<>(track.track.artists);
+                        Track song = new Track();
+                        song.setArtistName(artistSimple.get(0).name);
+                        song.setTrackName(track.track.name);
+                        mPlaylistTracks.add(song);
+                    }
                 }
 
                 //Currently Spotify Api has a limit of 50 songs in each query, so for larger playlists

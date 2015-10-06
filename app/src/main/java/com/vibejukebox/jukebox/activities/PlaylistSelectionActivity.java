@@ -299,7 +299,8 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     public void startLastTimeJukebox(View view)
     {
-        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+        if(getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE &&
+                getCreatedJukeboxId() != null)
             fetchLastJukebox();
     }
 
@@ -343,9 +344,13 @@ public class PlaylistSelectionActivity extends AppCompatActivity
                     Log.d(TAG, "Successfully retrieved Jukebox from cloud with ID:  " + jukeboxID);
 
                 } else {
-                    Log.e(TAG, "Jukebox stored no longer valid, setting ID to null. " + e.getMessage());
-                    if (getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+                    if(e.getMessage().equals("no results found for query")) {
+                        Log.e(TAG, "Jukebox stored no longer valid, setting ID to null. " + e.getMessage());
                         storeNullJukeboxID();
+                    }
+
+                    /*if (getNetworkConnectivity(getBaseContext()) != Connectivity.OFFLINE)
+                        storeNullJukeboxID();*/
                 }
             }
         });

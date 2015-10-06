@@ -817,6 +817,10 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             mPlayer = Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
                 @Override
                 public void onInitialized(Player player) {
+                    //Sometimes this check
+                    if(mPlayer == null)
+                        mPlayer = player;
+
                     mPlayer.setConnectivityStatus(getNetworkConnectivity(JukeboxPlaylistActivity.this));
                     mPlayer.addConnectionStateCallback(JukeboxPlaylistActivity.this);
                     mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);

@@ -361,7 +361,7 @@ public class VibeService extends Service {
         final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
         if(geoPoint == null){
             Log.e(TAG, "An error occurred getting the current location");
-            return;
+            //return;
         }
 
         jukebox.put("name", mPlaylistName);
