@@ -49,7 +49,8 @@ public class Track implements Parcelable
         return this.trackUri;
     }
 
-    public void setTrackUri(String trackUri){
+    public void setTrackUri(String trackUri)
+	{
         this.trackUri = trackUri;
     }
 

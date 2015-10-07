@@ -1051,11 +1051,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
              * Only available when user has joined an active playlist.
              */
             case R.id.addSongFromSpotify:
-                Log.d(TAG, "Add songs... ");
-
                 Intent intent = new Intent(this, MusicSearchActivity.class);
                 intent.putExtra(VIBE_JUKEBOX_ID, mJukeboxID);
-                intent.putParcelableArrayListExtra(VIBE_TRACK_QUEUE_LIST, (ArrayList<Track>)mPlaylistTracks);
                 startActivity(intent);
         }
         return super.onOptionsItemSelected(item);

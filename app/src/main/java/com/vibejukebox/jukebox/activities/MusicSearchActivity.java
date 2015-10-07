@@ -48,22 +48,20 @@ public class MusicSearchActivity extends ListActivity
 	/** Vibe Jukebox variables */
 	private static final String VIBE_JUKEBOX_ID = "JukeboxID";
 
-	private static final String VIBE_TRACK_QUEUE_LIST = "TrackQueue";
+    private static final String VIBE_PARSE_SONGID = "songid";
+
+    private static final String VIBE_PARSE_JUKEBOXID = "jukeboxid";
 
     private static final int VIBE_DISPLAY_QUERY_SEARCH_RESULTS = 1;
 
-	private static final String WEB_SERVICE_SEARCH = "http://ws.spotify.com/search/1/track.json?q=";
-	private String mUrl = null;
-	private ListView songListView;
-	private ProgressDialog mProgressDialog;
-	
 	private static String mJukeboxID;
-	JukeboxPlaylistActivity mPlayListActivity = null;
 	
 	//Ui elements
 	private List<Track> mQueryTrackList;
-	private List<Track> mQueueTracks;
+
 	private EditText mEditText;
+
+    private ProgressDialog mProgressDialog;
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -77,35 +75,17 @@ public class MusicSearchActivity extends ListActivity
         }
     });
 
-    public String getUrl()
-    {
-        return mUrl;
-    }
-
-    /**
-     * Function to retrieve the previously stored access_token from Shared Preferences
-     * @return: Access code string
-     */
-    public String retrieveSpotifyAccessToken()
-    {
-        if(DEBUG)
-            Log.d(TAG, "Retrieving Spotify access token form storage ...");
-
-        SharedPreferences storage = getSharedPreferences(JukeboxApplication.TOKEN, 0);
-        String access_token = storage.getString(JukeboxApplication.ACCESS_TOKEN, null);
-
-        return access_token;
-    }
-
     /** --------------------------------------------------------------------------------------- */
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
+        if(DEBUG)
+            Log.d(TAG, " - onCreate - ");
+
 		setContentView(R.layout.activity_music_search);
 		mJukeboxID = getIntent().getStringExtra(VIBE_JUKEBOX_ID);
-		mQueueTracks = getIntent().getParcelableArrayListExtra(VIBE_TRACK_QUEUE_LIST);
 	}
 
     @Override
@@ -151,7 +131,7 @@ public class MusicSearchActivity extends ListActivity
     private void launchSearch()
     {
         if(DEBUG)
-            Log.d(TAG, "launchSearch()");
+            Log.d(TAG, "launchSearch Spotify Api");
 
         String userQuery = "";
         if(mEditText != null)
@@ -192,7 +172,7 @@ public class MusicSearchActivity extends ListActivity
     private void displaySearchQuery(List<Track> trackList)
     {
         Log.d(TAG, "displaySearchQuery -- ");
-        songListView = getListView();
+        ListView songListView = getListView();
 
         //Display the tracks in the Song Adapter with the boolean value to true to show the plus sign to add songs
         SongListAdapter songListAdapter = new SongListAdapter(this, (ArrayList<Track>)trackList, true);
@@ -217,7 +197,8 @@ public class MusicSearchActivity extends ListActivity
 		super.onListItemClick(l, v, position, id);
 		
 		Track trackClicked = mQueryTrackList.get(position);
-		//If positive goes to add song to queue function
+
+		//Launches verification dialog to confirm adding the song
 		addSongPopUp(trackClicked);
 	}
 	
@@ -257,25 +238,23 @@ public class MusicSearchActivity extends ListActivity
 
     private void addTrackToQueue(final Track track)
     {
-        Log.d(TAG, "addTrackToQueue");
+        if(DEBUG)
+            Log.d(TAG, "addTrackToQueue");
 
-        //Update Jukebox object in the backend
         String trackUri = track.getTrackUri();
-        String[] items = trackUri.split(":");
-
-        final String trackId = items[items.length -1];
         final  String jukeboxId = mJukeboxID;
 
 		Map<String, String> params = new HashMap<>();
-		params.put("songid", trackUri);
-		params.put("jukeboxid", jukeboxId);
+		params.put(VIBE_PARSE_SONGID, trackUri);
+		params.put(VIBE_PARSE_JUKEBOXID, jukeboxId);
 
+        //Update Jukebox object in the backend
 		ParseCloud.callFunctionInBackground("addSongToQueue", params, new FunctionCallback<Integer>() {
             @Override
             public void done(Integer trackPosition, ParseException e) {
                 if (e == null) {
                     Log.d(TAG, "Successful call to backend function, song added to queue: " + trackPosition);
-                    updateTrackList(track, trackPosition);
+                    displayUpdatedPlaylist();
 
                 } else {
                     Log.e(TAG, "Something went wrong adding song in the backend function.. ");
@@ -286,34 +265,12 @@ public class MusicSearchActivity extends ListActivity
         });
     }
 
-	/**
-	 * This function updates the track queue and calls the function @displayUpdatedPlaylist to launch
-	 * the activity to display.
-	 */
-	private void updateTrackList(Track track , Integer trackPosition)
-	{
-		//Update the queue with the newly added track in the correct position
-		if(track != null){
-            //if the track position is out of bounds, song gets added to the end of the list
-            if(trackPosition > mQueueTracks.size()){
-                mQueueTracks.add(track);
-            } else{
-                mQueueTracks.add(trackPosition, track);
-            }
-        }
-
-		displayUpdatedPlaylist(trackPosition);
-	}
-
-	public void displayUpdatedPlaylist(Integer trackPosition)
+	public void displayUpdatedPlaylist()
 	{
 		if(DEBUG)
 			Log.d(TAG, "displayUpdatedPlaylist -- ");
 
-        //TODO: cleanup function
 		Intent intent = new Intent(this, JukeboxPlaylistActivity.class);
-        //intent.putExtra("position", trackPosition);
-		//intent.putParcelableArrayListExtra("tracks", (ArrayList<Track>) mQueueTracks);
 		intent.putExtra(Vibe.VIBE_JUKEBOX_CALL_REFRESH, false);
         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 
@@ -322,4 +279,3 @@ public class MusicSearchActivity extends ListActivity
 		finish();
 	}
 }
-
