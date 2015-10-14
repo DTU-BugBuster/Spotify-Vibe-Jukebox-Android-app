@@ -12,22 +12,16 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion '22.0.1'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
     defaultConfig {
         applicationId "com.vibejukebox.jukebox"
         minSdkVersion 14
-        targetSdkVersion 22
-        versionCode 5
-        versionName "1.4"
+        targetSdkVersion 23
+        versionCode 6
+        versionName "1.5"
     }
-    buildTypes {
-        release {
-            //runProguard false
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
@@ -36,12 +30,21 @@ android {
         exclude 'META-INF/notice.txt'
 
     }
-    productFlavors {
-    }
+
+    /*productFlavors {
+    }*/
 
     /*sourceSets{
         main.java.srcDirs += 'src/main/java/com/vibejukebox.jukebox'
     }*/
+
+    buildTypes {
+        release {
+            //runProguard false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 repositories {
@@ -55,13 +58,13 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     //Parse Library for backend
-    compile files('libs/Parse-1.7.0.jar')
+    compile 'com.parse:parse-android:1.10.2'
 
     //Handles authentication and authorization for Spotify
-    compile 'com.spotify.sdk:spotify-auth:1.0.0-beta10@aar'
+    compile 'com.spotify.sdk:spotify-auth:1.0.0-beta11@aar'
 
     //Handles music playback using the Spotify Api
-    compile 'com.spotify.sdk:spotify-player:1.0.0-beta10@aar'
+    compile 'com.spotify.sdk:spotify-player:1.0.0-beta11@aar'
 
     //Spotify Web Api wrapper (Kaaes)
     compile(name:'spotify-web-api-android-0.1.0', ext:'aar')
@@ -74,9 +77,10 @@ dependencies {
     compile 'com.google.code.gson:gson:2.3'
     //compile 'org.parceler:parceler:0.2.13'
 
-    compile 'com.android.support:appcompat-v7:22.1.1'
-    //compile 'com.android.support:support-v4:22.0.0'
-    compile 'com.google.android.gms:play-services:7.0.0'
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:support-v4:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile 'com.google.android.gms:play-services-location:8.1.0'
     compile 'com.loopj.android:android-async-http:1.4.6'
 
     //Image URL loading
@@ -92,7 +96,7 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.2.1'
 
     //Recycler view
-    compile 'com.android.support:recyclerview-v7:22.1.1'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
 
     //compile 'com.google.protobuf:protobuf-java:2.5.0'
     /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {
