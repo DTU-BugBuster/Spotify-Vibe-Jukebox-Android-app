@@ -10,6 +10,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -35,6 +36,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 public class VibeJukeboxMainActivity extends VibeBaseActivity
+        implements ActivityCompat.OnRequestPermissionsResultCallback
 {
     /** ----------------------    Fields -----------------------------------*/
 	private static final String TAG = VibeJukeboxMainActivity.class.getSimpleName();
@@ -203,7 +205,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 		if(DEBUG)
 			Log.d(TAG, "Joining Jukebox ...");
 
-		joinJukebox();
+        joinJukebox();
 	}
 
     private void joinJukebox()
@@ -226,13 +228,18 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
             Log.d(TAG, "createNewJukebox -- ");
 
         if(!Vibe.getConnectivityStatus()){
-            Toast.makeText(this, "Lost connection to Network, please connect and try again", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Lost connection to Network, please connect and try again",
+                    Toast.LENGTH_LONG).show();
             return;
         }
 
         //User must login to Spotify account to be able to stream music
         //loginToSpotifyAccount();TODO , inTEST
-        loginToSpotify(this);
+
+        if(Vibe.getCurrentLocation() == null)
+            Toast.makeText(this, "Grant Location permission to create a new jukebox. ", Toast.LENGTH_LONG).show();
+        else
+            loginToSpotify(this);
     }
 
     @Override

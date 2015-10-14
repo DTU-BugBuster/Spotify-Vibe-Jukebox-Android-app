@@ -1,21 +1,24 @@
 package com.vibejukebox.jukebox.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
+import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.ErrorDialogFragment;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -35,28 +38,26 @@ import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Vibe;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.UserPrivate;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 /**
  * Created by Sergex on 7/26/15.
  */
 public abstract class VibeBaseActivity extends AppCompatActivity implements
-        LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+        LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback
 {
     private static final String TAG = VibeBaseActivity.class.getSimpleName();
+
     private static final boolean DEBUG = DebugLog.DEBUG;
+
+    private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
     public static final String VIBE_JUKEBOX_PREFERENCES = "JukeboxPreferences";
 
     public static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
+
+    private static final int REQUEST_LOCATION_PERMISSION_CODE = 75;
 
     private boolean mResolvingError = false;
 
@@ -91,6 +92,10 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     protected boolean mRequestLocationUpdates = false;
 
+    protected boolean mPermissionGranted = false;
+
+    private View mMainLayout;
+
     /** Entry point to Google Play services */
     protected static GoogleApiClient mGoogleApiClient;
 
@@ -109,6 +114,9 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        Log.d(TAG, "Connecting Google Api client");
+        mGoogleApiClient.connect();
     }
 
     protected void createLocationRequest()
@@ -122,13 +130,22 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(DEBUG)
-            Log.d(TAG, "onCreate -- ");
+            Log.d(TAG, "** onCreate -- ");
+
+        mResolvingError = savedInstanceState != null
+                && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
         //Connect to location services
-        buildGoogleApiClient();
+        //buildGoogleApiClient();
 
         //TODO:(Not implemented) boolean is always false, check if it will be needed
         if(mRequestLocationUpdates)
@@ -139,16 +156,79 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         if(DEBUG)
-            Log.d(TAG, "onStart -- ");
+            Log.d(TAG, "** onStart -- ");
 
-        mGoogleApiClient.connect();
+        //View for SnackBar
+        mMainLayout = findViewById(R.id.MainLayout);
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED){
+            //Location permission not granted yet
+            requestLocationPermission();
+        }
+        else{
+            Log.e(TAG, "Permission already granted.. ");
+            buildGoogleApiClient();
+        }
+
+        //mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        Log.e(TAG, "PERMISSIONS RESULT " + requestCode);
+        switch(requestCode){
+            case REQUEST_LOCATION_PERMISSION_CODE:
+                //If request is cancelled the array is empty
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    mPermissionGranted = true;
+                    buildGoogleApiClient();
+                } else {
+                    //Disable location functionality
+                    Log.i(TAG, "Location permission was not granted.");
+                    mPermissionGranted = false;
+                    Snackbar.make(mMainLayout, R.string.VIBE_PERMISSION_NOT_GRANTED, Snackbar.LENGTH_SHORT).show();
+                }
+
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                break;
+        }
+    }
+
+    private void requestLocationPermission()
+    {
+        Log.e(TAG, "Requesting Location permission.");
+        if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)){
+            Log.i(TAG, "Displaying an additional explanation of the need of location permission");
+            if(mMainLayout == null){
+                Log.e(TAG, "VIEW LAYOUT NULL!");
+                return;
+            }
+
+            Snackbar.make(mMainLayout, R.string.VIBE_PERMISSION_NOT_GRANTED,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.VIBE_PERMISSION_GRANT, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            ActivityCompat.requestPermissions(VibeBaseActivity.this,
+                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                    REQUEST_LOCATION_PERMISSION_CODE);
+                        }
+                    }).show();
+        } else {
+            //Location permission was not granted yet, request it directly
+            ActivityCompat.requestPermissions(VibeBaseActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION_CODE);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if(DEBUG)
-            Log.d(TAG, "onResume --");
+            Log.d(TAG, " ** onResume --");
     }
 
     @Override
@@ -163,12 +243,12 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     @Override
     protected void onStop() {
-        super.onStop();
         if(DEBUG)
             Log.d(TAG, "onStop -- ");
 
-        if(mGoogleApiClient.isConnected())
+        if(mGoogleApiClient != null && mGoogleApiClient.isConnected())
             mGoogleApiClient.disconnect();
+        super.onStop();
     }
 
     @Override
@@ -269,9 +349,6 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         //Check if the result comes from the correct activity
         if(requestCode == SPOTIFY_API_REQUEST_CODE){
             AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, data);
-            /** TODO ::::: Testing */
-            //response = getTestResponse(response);
-
             switch(response.getType()){
                 //Response was successful and contains auth token
                 case TOKEN:
@@ -289,7 +366,17 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
                 //Most likely auth flow was cancelled
                 default:
                     break;
-                    //Handle other cases
+            }
+        }
+
+        else if(requestCode == REQUEST_RESOLVE_ERROR){
+            mResolvingError = false;
+            if(resultCode == RESULT_OK)
+            {
+                //Make sure the app is not already connected or attempting to connect
+                if(!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()){
+                    mGoogleApiClient.connect();
+                }
             }
         }
     }

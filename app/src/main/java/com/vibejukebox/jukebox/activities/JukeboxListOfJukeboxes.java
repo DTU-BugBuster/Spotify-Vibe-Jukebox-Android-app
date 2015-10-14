@@ -289,7 +289,8 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         trackListIntent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, false);
         trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
-        trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
+        //trackListIntent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUriList);
+        trackListIntent.putExtra(Vibe.VIBE_JUKEBOX_QUEUE_HEAD_URI, mTrackUriList.get(0));
         trackListIntent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>)trackList);
         startActivity(trackListIntent);
     }

@@ -10,6 +10,9 @@
     <string name="VIBE_APP_OFFLINE">Network Connection Offline</string>
     <string name="VIBE_NOT_ROOT_TASK">Main Activity is not the root.  Finishing Main Activity instead of launching.</string>
 
+    <string name="VIBE_PERMISSION_NOT_GRANTED">Location permission is needed for users to join your Jukebox.</string>
+    <string name="VIBE_PERMISSION_GRANT">Grant</string>
+
     <string name="VIBE_APP_MY_MUSIC">My Music</string>
     <string name="VIBE_APP_GET_YOUR_VIBE">Get your Vibe</string>
     <string name="set_up_list_songs">Get your Vibe</string>
@@ -57,7 +60,7 @@
     <string name="VIBE_APP_NON_PREMIUM_ALERT_TITLE">Account</string>
     <string name="VIBE_APP_USER_NOT_PREMIUM_MSG">You must have a premium Spotify account to stream music, login with different account? </string>
     <string name="VIBE_APP_JOIN_JUKEBOX_INSTEAD">You can still join a jukebox and add songs to an active jukebox as a free user! </string>
-    <string name="VIBE_APP_SERVER_ERROR">Server not reached! please try again. </string>
+    <string name="VIBE_APP_SERVER_ERROR">Server not reached at this moment! Give it another shot now or in a moment.</string>
     <string name="VIBE_APP_NO_NEARBY_JUKEBOXES_MSG">No one around to join just yet, Start the party creating a jukebox yourself! </string>
 
     <string name="VIBE_APP_NO_SAVED_SONGS">Sorry, you have no saved songs in Spotify yet! </string>
