@@ -150,7 +150,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private String mPlaylistName;
 
     private List<Track> mPlaylistTracks;
-    private List<String> mPlayListTrackUris;
+    //private List<String> mPlayListTrackUris;
+    private String mPlayListHeadUri;
 
     /**
      * Used to get notifications from the system about the current network state in order
@@ -267,7 +268,11 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         String playlistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
         mJukeboxID = intent.getStringExtra(Vibe.VIBE_JUKEBOX_ID);
         mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
-        mPlayListTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
+
+
+        //mPlayListTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
+        mPlayListHeadUri = intent.getStringExtra(Vibe.VIBE_JUKEBOX_QUEUE_HEAD_URI);
+
         mPlaylistName = playlistName;
 
         if(mIsActiveUser){
@@ -282,7 +287,8 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             Log.d(TAG, " -- Joined Jukebox -- ");
             //Sets the correct layout for user that joined a jukebox
             setContentView(R.layout.activity_jukebox_playlist_join);
-            getTrackAlbumArt(mPlayListTrackUris.get(0));
+            //getTrackAlbumArt(mPlayListTrackUris.get(0));
+            getTrackAlbumArt(mPlayListHeadUri);
         }
 
         //Setup main Player Ui
@@ -609,7 +615,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     protected void onDestroy()
     {
         if(DEBUG)
-            Log.e(TAG, "onDestroy -- ");
+            Log.d(TAG, "onDestroy -- ");
 
         mChangeTrack = false;
         if(mPlayer != null)
@@ -824,15 +830,16 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     mPlayer.setConnectivityStatus(getNetworkConnectivity(JukeboxPlaylistActivity.this));
                     mPlayer.addConnectionStateCallback(JukeboxPlaylistActivity.this);
                     mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);
-                    mTrackUriHead = mPlayListTrackUris.get(0);
-                    mPlayer.play(mTrackUriHead);
+                    //mTrackUriHead = mPlayListTrackUris.get(0);
+                    mPlayer.play(mPlayListHeadUri);
 
                     //Update Player button
                     ImageButton play = (ImageButton)findViewById(R.id.playButton);
                     play.setImageDrawable(getResources().getDrawable(R.drawable.pause));
 
                     //Update Album Art
-                    getTrackAlbumArt(mPlayListTrackUris.get(0));
+                    //getTrackAlbumArt(mPlayListTrackUris.get(0));
+                    getTrackAlbumArt(mPlayListHeadUri);
                 }
 
                 @Override
@@ -849,7 +856,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private void continuePlayback()
     {
         if(mPlayer.isInitialized()){
-            mPlayer.play(mTrackUriHead);
+            mPlayer.play(mPlayListHeadUri);
             //getTrackAlbumArt(mTrackUriHead);
         }
     }
@@ -975,7 +982,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             continuePlayback();
         }
 
-        getTrackAlbumArt(mTrackUriHead);
+        getTrackAlbumArt(mPlayListHeadUri);
 
         mChangeTrack = true;
         mSongListAdapter = new SongListAdapter(this, (ArrayList<Track>)tracks, false);
@@ -998,8 +1005,10 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         final List<Track> trackList = new ArrayList<>();
-        mTrackUriHead = trackURIs.get(0);
-        mPlayListTrackUris = new ArrayList<>(trackURIs);
+        mPlayListHeadUri = trackURIs.get(0);
+
+        //mTrackUriHead = trackURIs.get(0);
+        //mPlayListTrackUris = new ArrayList<>(trackURIs);
 
         //Get Several tracks Api point
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
@@ -1117,17 +1126,12 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         switch(eventType){
             case TRACK_CHANGED:
                 if(DEBUG) Log.d(TAG, "TRACK_CHANGED");
-                if(!mPlayer.isLoggedIn())
-                    Log.e(TAG, "NOT logged in");
-                if(mPlayer.isShutdown())
-                    Log.e(TAG, "SHUTDOWN");
                 break;
             case PLAY:
                 if(DEBUG) Log.d(TAG, "PLAY_EVENT");
-
                 break;
             case PAUSE:
-                Log.d(TAG, "PAUSE_EVENT  " + mChangeTrack);
+                if(DEBUG) Log.d(TAG, "PAUSE_EVENT  " + mChangeTrack);
                 if(mChangeTrack)
                     mPlaylistHandler.sendEmptyMessage(VIBE_GET_ACTIVE_JUKEBOX_AND_UPDATE);
                 break;
@@ -1143,7 +1147,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                 skipTrack();
                 break;
             case ERROR_PLAYBACK:
-                if(!mPlayListTrackUris.isEmpty())
+                if(!mPlaylistTracks.isEmpty())
                     mPlaylistHandler.sendEmptyMessage(VIBE_GET_ACTIVE_JUKEBOX_AND_UPDATE);
                 break;
         }

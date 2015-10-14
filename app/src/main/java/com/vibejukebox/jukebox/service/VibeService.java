@@ -199,7 +199,6 @@ public class VibeService extends Service {
     private ParseGeoPoint getGeoPointFromMyLocation(Location location)
     {
         if(location != null) {
-            mLocation = location;
             return new ParseGeoPoint(location.getLatitude(), location.getLongitude());
         }
         else {
@@ -261,13 +260,12 @@ public class VibeService extends Service {
             Log.d(TAG, "launchActivePlaylist (Service)");
 
         Intent intent = new Intent(getApplicationContext(), JukeboxPlaylistActivity.class);
-        //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
         intent.putExtra(Vibe.VIBE_IS_ACTIVE_PLAYLIST, true);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, mJukeboxId);
         intent.putExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME, mPlaylistName);
-        //intent.putExtra("storedLocation", mLocation);
         intent.putParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE, (ArrayList<Track>) mPlaylistTracks);
-        intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
+        intent.putExtra(Vibe.VIBE_JUKEBOX_QUEUE_HEAD_URI, mTrackUris.get(0));
+        //intent.putStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE, (ArrayList<String>) mTrackUris);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         startActivity(intent);
@@ -303,13 +301,14 @@ public class VibeService extends Service {
                     }
 
                 } else {
-                    Log.e(TAG, "Error fetching jukebox object, ID: " + mJukeboxId);
-                    Log.e(TAG, e.getMessage());
-
-                    Toast.makeText(getApplicationContext(),
-                            getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
-                            Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
+                    Log.e(TAG, "Error fetching jukebox object with ID: " + mJukeboxId);
+                    if(e.getMessage().equals("i/o failure")){
+                        Toast.makeText(getApplicationContext(),
+                                getResources().getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE),
+                                Toast.LENGTH_LONG).show();
+                    } else if(e.getMessage().equals("no results found for query")){
+                        Log.w(TAG, "Jukebox Id was not found -> " +  mJukeboxId);
+                    }
                 }
             }
         });
@@ -358,14 +357,14 @@ public class VibeService extends Service {
         if(DEBUG)
             Log.d(TAG, " -- update ALL --");
 
-        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(mLocation);
-        if(geoPoint == null){
-            Log.e(TAG, "An error occurred getting the current location");
-            //return;
+        final ParseGeoPoint geoPoint = getGeoPointFromMyLocation(Vibe.getCurrentLocation());
+        if(geoPoint != null){
+            jukebox.put("location", geoPoint);
+        } else{
+            Log.e(TAG, "Location is null.");
         }
 
         jukebox.put("name", mPlaylistName);
-        jukebox.put("location", geoPoint);
         jukebox.put("queueSongIDs", mTrackUris);
         jukebox.put("defaultQueueSongIDs", mTrackUris);
         saveInBackground(jukebox);

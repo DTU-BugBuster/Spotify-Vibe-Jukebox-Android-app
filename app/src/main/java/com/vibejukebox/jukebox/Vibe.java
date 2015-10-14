@@ -18,6 +18,8 @@ public final class Vibe
 
     public static final String VIBE_IS_ACTIVE_PLAYLIST = "ActivePlaylist";
 
+    public static final String VIBE_JUKEBOX_QUEUE_HEAD_URI = "queueHeadUri";
+
     public static final String VIBE_JUKEBOX_TRACK_URI_QUEUE= "queueSongIDs";
 
     public static final String VIBE_JUKEBOX_TRACKS_IN_QUEUE = "tracks";
