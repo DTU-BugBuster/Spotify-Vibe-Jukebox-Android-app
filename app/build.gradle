@@ -13,13 +13,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '23.0.1'
+    buildToolsVersion '23.0.2'
     defaultConfig {
         applicationId "com.vibejukebox.jukebox"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 6
-        versionName "1.5"
+        versionCode 7
+        versionName "1.6"
     }
 
     packagingOptions {
@@ -74,13 +74,13 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.2.0'
 
     //REST
-    compile 'com.google.code.gson:gson:2.3'
+    compile 'com.google.code.gson:gson:2.4'
     //compile 'org.parceler:parceler:0.2.13'
 
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:support-v4:23.0.1'
-    compile 'com.android.support:design:23.0.1'
-    compile 'com.google.android.gms:play-services-location:8.1.0'
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:support-v4:23.1.0'
+    compile 'com.android.support:design:23.1.0'
+    compile 'com.google.android.gms:play-services-location:8.3.0'
     compile 'com.loopj.android:android-async-http:1.4.6'
 
     //Image URL loading
@@ -96,7 +96,7 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.2.1'
 
     //Recycler view
-    compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'com.android.support:recyclerview-v7:23.1.0'
 
     //compile 'com.google.protobuf:protobuf-java:2.5.0'
     /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {

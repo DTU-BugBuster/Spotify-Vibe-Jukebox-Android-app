@@ -156,7 +156,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         if(DEBUG)
-            Log.d(TAG, "** onStart -- ");
+            Log.d(TAG, "-- onStart -- ");
 
         //View for SnackBar
         mMainLayout = findViewById(R.id.MainLayout);
@@ -166,7 +166,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
             requestLocationPermission();
         }
         else{
-            Log.e(TAG, "Permission already granted.. ");
+            Log.d(TAG, " ---- Permission already granted.. ");
             buildGoogleApiClient();
         }
 

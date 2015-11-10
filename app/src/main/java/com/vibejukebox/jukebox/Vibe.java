@@ -10,6 +10,8 @@ import android.util.Log;
  */
 public final class Vibe
 {
+    public static final String TAG = Vibe.class.getSimpleName();
+
     public static final String VIBE_NEARBY_JUKEBOXES = "NearbyJukeboxes";
 
     public static final String VIBE_CURRENT_LOCATION = "CurrentLocation";
@@ -75,7 +77,7 @@ public final class Vibe
 
     public static void setCurrentLocation(Location location)
     {
-        Log.e(" - VIBE CLASS - ", "Location Set:  " + location.getLatitude() + "  " + location.getLongitude());
+        Log.i(TAG, "Location Set:  " + location.getLatitude() + "  " + location.getLongitude());
         mCurrentLocation = location;
     }
 

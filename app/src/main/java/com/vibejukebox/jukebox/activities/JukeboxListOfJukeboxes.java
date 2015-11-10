@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -131,14 +130,17 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 		case CONNECTION_FAILURE_RESOLUTION_REQUEST:
 			switch(resultCode){
 			case Activity.RESULT_OK:
-				Log.d(TAG, "Connected to Google Play Services."); 
+                if(DEBUG)
+			    	Log.d(TAG, "Connected to Google Play Services.");
 				break;
 			default:
-				Log.d(TAG, "Could not connect to Google Play Services.");
+                if(DEBUG)
+				    Log.d(TAG, "Could not connect to Google Play Services.");
 				break;
 			}
 			default:
-				Log.d(TAG, "Unknown request code received for the activity.");
+                if(DEBUG)
+				    Log.d(TAG, "Unknown request code received for the activity.");
 				break;
 		}
 	}
@@ -220,7 +222,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 
                 //TODO: fix null pointer crash when accessing an empty jukebox
                 if (mTrackUriList == null) {
-                    Log.d(TAG, "Song list is NULL");
+                    Log.e(TAG, "Song list is NULL");
                     return;
                 }
 
@@ -242,7 +244,9 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
                 Log.d(TAG, "Successful call to get Several tracks from Uri list");
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
-                    Log.d(TAG, "Track name:  " + track.name);
+                    if(DEBUG)
+                        Log.d(TAG, "Track name:  " + track.name);
+
                     Track vibeTrack = new Track(track.artists.get(0).name, track.name);
                     vibeTrack.setTrackName(track.name);
                     vibeTrack.setArtistName(track.artists.get(0).name);

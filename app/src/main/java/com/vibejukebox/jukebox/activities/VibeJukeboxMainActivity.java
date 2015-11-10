@@ -102,11 +102,12 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     /** ----------------------------    Parse Jukebox  -----------------------------------*/
     private String getCreatedJukeboxId()
     {
-        Log.d(TAG, "getCreatedJukeboxId -- ");
+        if(DEBUG)
+            Log.d(TAG, "getCreatedJukeboxId -- ");
         SharedPreferences preferences = getSharedPreferences(Vibe.VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(Vibe.VIBE_JUKEBOX_STRING_PREFERENCE, null);
 
-        Log.e(TAG, "------------------------------------------------ Returning ID: " + jukeboxId);
+        //Log.d(TAG, "------------------------------------------------ Returning ID: " + jukeboxId);
         return jukeboxId;
     }
 
@@ -234,7 +235,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         }
 
         //User must login to Spotify account to be able to stream music
-        //loginToSpotifyAccount();TODO , inTEST
+        //loginToSpotifyAccount();TODO ,inTEST
 
         if(Vibe.getCurrentLocation() == null)
             Toast.makeText(this, "Grant Location permission to create a new jukebox. ", Toast.LENGTH_LONG).show();
