@@ -13,6 +13,8 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.location.Location;
+import android.media.session.MediaSession;
+import android.media.session.MediaSessionManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -56,7 +58,6 @@ import com.vibejukebox.jukebox.DrawerItem;
 import com.vibejukebox.jukebox.DrawerListAdapter;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
-import com.vibejukebox.jukebox.RoundImageView;
 import com.vibejukebox.jukebox.SpotifyClient;
 import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
@@ -92,8 +93,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private static final String VIBE_JUKEBOX_ACCESS_TOKEN_PREF = "AccessToken";
 
     /** SPOTIFY Api variables */
-    //private AuthenticationResponse mAuthResponse;
-
     private Player mPlayer;
 
     private PlayerState mCurrentPlayerState = new PlayerState();
@@ -130,8 +129,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private static final int VIBE_CREATE_NEW_PLAYLIST_DRAWER = 3;
 
     private static final int VIBE_LOGOUT_SPOTIFY = 4;
-
-    private String mTrackUriHead;
 
     private final boolean DEBUG = DebugLog.DEBUG;
 
@@ -268,7 +265,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         String playlistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_PLAYLIST_NAME);
         mJukeboxID = intent.getStringExtra(Vibe.VIBE_JUKEBOX_ID);
         mPlaylistTracks = intent.getParcelableArrayListExtra(Vibe.VIBE_JUKEBOX_TRACKS_IN_QUEUE);
-
 
         //mPlayListTrackUris = intent.getStringArrayListExtra(Vibe.VIBE_JUKEBOX_TRACK_URI_QUEUE);
         mPlayListHeadUri = intent.getStringExtra(Vibe.VIBE_JUKEBOX_QUEUE_HEAD_URI);
@@ -433,7 +429,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        Log.e(TAG, "onPrepareOptionsMenu -- ");
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -661,7 +656,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
     private void handleConfigurationChange()
     {
         if(DEBUG)
-            Log.e(TAG, "handleConfigurationChange -- ");
+            Log.d(TAG, "handleConfigurationChange -- ");
 
         setupMainLayout(mPlaylistName, mIsActiveUser);
 
@@ -830,7 +825,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
                     mPlayer.setConnectivityStatus(getNetworkConnectivity(JukeboxPlaylistActivity.this));
                     mPlayer.addConnectionStateCallback(JukeboxPlaylistActivity.this);
                     mPlayer.addPlayerNotificationCallback(JukeboxPlaylistActivity.this);
-                    //mTrackUriHead = mPlayListTrackUris.get(0);
                     mPlayer.play(mPlayListHeadUri);
 
                     //Update Player button
@@ -1007,9 +1001,6 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
         final List<Track> trackList = new ArrayList<>();
         mPlayListHeadUri = trackURIs.get(0);
 
-        //mTrackUriHead = trackURIs.get(0);
-        //mPlayListTrackUris = new ArrayList<>(trackURIs);
-
         //Get Several tracks Api point
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
             @Override
@@ -1176,7 +1167,7 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
             mPlayer.logout();
         }
 
-        AuthenticationClient.logout(this);
+        AuthenticationClient.clearCookies(this);
         Intent intent = new Intent(this, VibeJukeboxMainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);

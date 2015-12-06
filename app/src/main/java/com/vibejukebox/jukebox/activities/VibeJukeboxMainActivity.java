@@ -91,7 +91,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
     private void logoutSpotify()
     {
-        AuthenticationClient.logout(this);
+        AuthenticationClient.clearCookies(this);
     }
 
     private void showSuggestionToast()
@@ -130,6 +130,9 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         super.onCreate(savedInstanceState);
         if(DEBUG)
             Log.d(TAG, "onCreate()");
+
+        String runtime = System.getProperty("java.vm.version");
+        Log.e(TAG, "RUNTIME:  " + runtime);
 
         // Possible work around for market launches. See http://code.google.com/p/android/issues/detail?id=2373
         // for more details. Essentially, the market launches the main activity on top of other activities.

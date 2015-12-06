@@ -138,7 +138,7 @@ public class PlaylistSelectionActivity extends AppCompatActivity
 
     private void logoutSpotify()
     {
-        AuthenticationClient.logout(this);
+        AuthenticationClient.clearCookies(this);
     }
 
     private void goBackToMain()

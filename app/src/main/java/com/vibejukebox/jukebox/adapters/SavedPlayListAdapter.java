@@ -16,8 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import kaaes.spotify.webapi.android.models.Image;
-
 /**
  * Created by Sergex on 10/3/14.
  */
