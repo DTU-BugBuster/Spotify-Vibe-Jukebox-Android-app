@@ -27,9 +27,6 @@ import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Tracks;
@@ -37,8 +34,10 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class JukeboxListOfJukeboxes extends VibeBaseActivity
-{
+import java.util.ArrayList;
+import java.util.List;
+
+public class JukeboxListOfJukeboxes extends VibeBaseActivity {
 	private static final String TAG = JukeboxListOfJukeboxes.class.getSimpleName();
 	private static final boolean DEBUG = DebugLog.DEBUG;
 
@@ -57,8 +56,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
     /** List of URIs of the chosen playlist to join */
     private List<String> mTrackUriList;
 
-	private void setJukeboxList(List<JukeboxObject> jukeboxes)
-	{
+	private void setJukeboxList(List<JukeboxObject> jukeboxes) {
         mJukeboxes = new ArrayList<>(jukeboxes);
 	}
 
@@ -77,10 +75,10 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 
 	/** -----------------------------------------------------------------------------------------*/
 	@Override
-	protected void onCreate(Bundle savedInstanceState) 
-	{
-		if(DEBUG)
-			Log.d(TAG, "onCreate - JukeboxListOfJukeboxes");
+	protected void onCreate(Bundle savedInstanceState) {
+		if(DEBUG) {
+            Log.d(TAG, "onCreate - JukeboxListOfJukeboxes");
+        }
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_jukebox_list_of_jukeboxes);
@@ -89,7 +87,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         setSupportActionBar(toolbar);
 
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+        if(actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 	}
@@ -97,7 +95,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
     @Override
     protected void onRestart() {
         super.onRestart();
-        if(mLocationServicesConnected){
+        if(mLocationServicesConnected) {
             fetchNearbyJukeboxes();
         }
     }
@@ -111,7 +109,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
+        switch(item.getItemId()) {
             case android.R.id.home:
                 NavUtils.navigateUpFromSameTask(this);
                 return true;
@@ -120,13 +118,13 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
     }
 
     @Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) 
-	{
-		if(DEBUG)
-			Log.d(TAG, "onActivityResult -- JukeboxListOFJukeboxes -- ");
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if(DEBUG) {
+            Log.d(TAG, "onActivityResult -- JukeboxListOFJukeboxes -- ");
+        }
 		
 		//TODO: remove
-		switch(requestCode){
+		switch(requestCode) {
 		case CONNECTION_FAILURE_RESOLUTION_REQUEST:
 			switch(resultCode){
 			case Activity.RESULT_OK:
@@ -158,15 +156,14 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
      * @param jukeboxList
      */
     @Override
-    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList)
-    {
+    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList) {
         setJukeboxList(jukeboxList);
         List<String> nearbyJukeboxes = new ArrayList<>();
 
         ViewGroup layout = (ViewGroup)findViewById(R.id.noJukeboxNearbyLayout);
-        if(jukeboxList.size() > 0){
+        if(jukeboxList.size() > 0) {
             layout.setVisibility(View.GONE);
-            for(JukeboxObject jukebox : jukeboxList){
+            for(JukeboxObject jukebox : jukeboxList) {
                 nearbyJukeboxes.add(jukebox.getName());
             }
 
@@ -181,20 +178,17 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         }
     }
 
-	private void showPoorConnectionToast()
-	{
+	private void showPoorConnectionToast() {
 		Toast.makeText(this, getString(R.string.VIBE_APP_POOR_CONNECTION_MESSAGE), Toast.LENGTH_LONG).show();
 	}
 
-    private void updateJukeboxList(List<String> nearbyJukeboxNames)
-    {
+    private void updateJukeboxList(List<String> nearbyJukeboxNames) {
         // Set the nearby jukebox names
         ListView nearbyJukeboxesView = (ListView)findViewById(R.id.nearJukeBokesView);
         nearbyJukeboxesView.setVisibility(View.VISIBLE);
         nearbyJukeboxesView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nearbyJukeboxNames){
             @Override
-            public View getView(int position, View convertView, ViewGroup parent)
-            {
+            public View getView(int position, View convertView, ViewGroup parent) {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
                 textView.setTextColor(getResources().getColor(R.color.vibe_white));
                 textView.setPadding(10,30,10,30);
@@ -232,8 +226,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         });
     }
 
-    private void createTrackListFromURIs(String trackURIs)
-    {
+    private void createTrackListFromURIs(String trackURIs) {
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         final List<Track> trackList = new ArrayList<>();
@@ -264,18 +257,18 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         });
     }
 
-    private String getTrackIds(List<String> trackURIs)
-    {
+    private String getTrackIds(List<String> trackURIs) {
         String[] strippedItems;
         String trackIds = "";
 
         int count = 0;
-        for(String uri : trackURIs)
-        {
+        for(String uri : trackURIs) {
             strippedItems = uri.split(":");
             trackIds += strippedItems[strippedItems.length -1];
-            if(count < trackURIs.size()-1)
+
+            if(count < trackURIs.size()-1) {
                 trackIds += ",";
+            }
             count++;
         }
         return trackIds;
@@ -285,8 +278,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
      * Launches the Activity that displays the playlist just joined by the user.
      * @param trackList: List of Track objects currently in the playlist.
      */
-    private void launchPlaylist(List<Track> trackList)
-    {
+    private void launchPlaylist(List<Track> trackList) {
         Intent trackListIntent = new Intent(getApplicationContext(),
                 JukeboxPlaylistActivity.class);
 
@@ -299,7 +291,7 @@ public class JukeboxListOfJukeboxes extends VibeBaseActivity
         startActivity(trackListIntent);
     }
 
-    public void createJukebox(View view){
+    public void createJukebox(View view) {
         loginToSpotify(this);
     }
 

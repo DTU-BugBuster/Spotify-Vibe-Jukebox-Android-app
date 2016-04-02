@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,7 +21,6 @@ import com.parse.FunctionCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.vibejukebox.jukebox.DebugLog;
-import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Track;
 import com.vibejukebox.jukebox.Vibe;
@@ -33,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.TracksPager;
@@ -40,8 +40,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class MusicSearchActivity extends ListActivity
-{
+public class MusicSearchActivity extends ListActivity {
+
 	private final static String TAG = MusicSearchActivity.class.getSimpleName(); 
 	private final static boolean DEBUG = DebugLog.DEBUG;
 
@@ -54,12 +54,12 @@ public class MusicSearchActivity extends ListActivity
 
     private static final int VIBE_DISPLAY_QUERY_SEARCH_RESULTS = 1;
 
-	private static String mJukeboxID;
+	private static String mJukeboxId;
 	
 	//Ui elements
 	private List<Track> mQueryTrackList;
 
-	private EditText mEditText;
+	@Bind(R.id.Search_Music) EditText mEditText;
 
     private ProgressDialog mProgressDialog;
 
@@ -78,25 +78,24 @@ public class MusicSearchActivity extends ListActivity
     /** --------------------------------------------------------------------------------------- */
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) 
-	{
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        if(DEBUG)
+        if(DEBUG) {
             Log.d(TAG, " - onCreate - ");
+        }
 
 		setContentView(R.layout.activity_music_search);
-		mJukeboxID = getIntent().getStringExtra(VIBE_JUKEBOX_ID);
+		mJukeboxId = getIntent().getStringExtra(VIBE_JUKEBOX_ID);
+        ButterKnife.bind(this);
 	}
 
     @Override
-    protected void onResume()
-    {
-        mEditText = (EditText)findViewById(R.id.Search_Music);
+    protected void onResume() {
         mEditText.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
-                if(event.getAction() == KeyEvent.ACTION_DOWN){
+                if(event.getAction() == KeyEvent.ACTION_DOWN) {
                     switch (keyCode){
                         case KeyEvent.KEYCODE_DPAD_CENTER:
                         case KeyEvent.KEYCODE_ENTER:
@@ -123,19 +122,17 @@ public class MusicSearchActivity extends ListActivity
      * Launch the user query to the Spotify Web Api
      * @param view
      */
-	public void searchMusic(View view)
-	{
+	public void searchMusic(View view) {
         launchSearch();
 	}
 
-    private void launchSearch()
-    {
-        if(DEBUG)
+    private void launchSearch() {
+        if(DEBUG) {
             Log.d(TAG, "launchSearch Spotify Api");
+        }
 
         String userQuery = "";
-        if(mEditText != null)
-            userQuery = mEditText.getText().toString();
+        userQuery = mEditText.getText().toString();
 
         final List<Track> trackList = new ArrayList<>();
         SpotifyApi api = new SpotifyApi();
@@ -169,9 +166,11 @@ public class MusicSearchActivity extends ListActivity
      * Funcion displays the tracks from the result of the user query
      * @param trackList: Each track is a Track object (Vibe)
      */
-    private void displaySearchQuery(List<Track> trackList)
-    {
-        Log.d(TAG, "displaySearchQuery -- ");
+    private void displaySearchQuery(List<Track> trackList) {
+        if(DEBUG){
+            Log.d(TAG, "displaySearchQuery -- ");
+        }
+
         ListView songListView = getListView();
 
         //Display the tracks in the Song Adapter with the boolean value to true to show the plus sign to add songs
@@ -190,22 +189,22 @@ public class MusicSearchActivity extends ListActivity
 
 	// --- ADD SONG ---
 	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) 
-	{	
-		if(DEBUG)
-			Log.d(TAG, "onListItemClick --");
-		super.onListItemClick(l, v, position, id);
-		
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        if(DEBUG) {
+            Log.d(TAG, "onListItemClick --");
+        }
+
 		Track trackClicked = mQueryTrackList.get(position);
 
 		//Launches verification dialog to confirm adding the song
 		addSongPopUp(trackClicked);
 	}
 	
-	private void addSongPopUp(final Track trackClicked)
-	{
-		if(DEBUG)
-			Log.d(TAG, "addSongPopUp --");
+	private void addSongPopUp(final Track trackClicked) {
+		if(DEBUG) {
+            Log.d(TAG, "addSongPopUp --");
+        }
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.ADD_SONG_TO_QUEUE)
@@ -236,13 +235,13 @@ public class MusicSearchActivity extends ListActivity
 		mProgressDialog.show();
 	}*/
 
-    private void addTrackToQueue(final Track track)
-    {
-        if(DEBUG)
+    private void addTrackToQueue(final Track track) {
+        if(DEBUG) {
             Log.d(TAG, "addTrackToQueue");
+        }
 
         String trackUri = track.getTrackUri();
-        final  String jukeboxId = mJukeboxID;
+        final  String jukeboxId = mJukeboxId;
 
 		Map<String, String> params = new HashMap<>();
 		params.put(VIBE_PARSE_SONGID, trackUri);
@@ -265,10 +264,10 @@ public class MusicSearchActivity extends ListActivity
         });
     }
 
-	public void displayUpdatedPlaylist()
-	{
-		if(DEBUG)
-			Log.d(TAG, "displayUpdatedPlaylist -- ");
+	public void displayUpdatedPlaylist() {
+		if(DEBUG) {
+            Log.d(TAG, "displayUpdatedPlaylist -- ");
+        }
 
 		Intent intent = new Intent(this, JukeboxPlaylistActivity.class);
 		intent.putExtra(Vibe.VIBE_JUKEBOX_CALL_REFRESH, false);

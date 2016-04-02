@@ -42,8 +42,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 
-public class JukeboxSavedPlaylists extends AppCompatActivity
-{
+public class JukeboxSavedPlaylists extends AppCompatActivity {
     private static final String TAG = JukeboxSavedPlaylists.class.getSimpleName();
 
     private static final boolean DEBUG = DebugLog.DEBUG;
@@ -102,10 +101,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      * Retrieves the created jukebox ID from the stored preferences.
      * @return: Jukebox object ID String.
      */
-    private String getCreatedJukeboxId()
-    {
-        if(DEBUG)
+    private String getCreatedJukeboxId() {
+        if(DEBUG) {
             Log.d(TAG, "getCreatedJukeboxId -- ");
+        }
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(VIBE_JUKEBOX_STRING_PREFERENCE, null);
@@ -117,10 +116,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      * Retrieves the stored Access token from Spotify Api
      * @return: Access token string
      */
-    private String getAccessToken()
-    {
-        if(DEBUG)
+    private String getAccessToken() {
+        if(DEBUG) {
             Log.d(TAG, "getAccessToken -- ");
+        }
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String accessToken = preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
@@ -128,11 +127,9 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(DEBUG)
-            Log.d(TAG, "onCreate -- ");
+        if(DEBUG) Log.d(TAG, "onCreate -- ");
         setContentView(R.layout.activity_jukebox_saved_playlists);
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.mytoolbar);
@@ -158,13 +155,6 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
-        if(DEBUG)
-            Log.d(TAG,"onRestart -- ");
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.jukebox_saved_playlists, menu);
@@ -186,9 +176,8 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     /**
      * Gets the user's Spotify account saved playlists
      */
-    private void getUserPlaylists()
-    {
-        if(DEBUG){
+    private void getUserPlaylists() {
+        if(DEBUG) {
             Log.d(TAG, "getUserPlaylists");
         }
 
@@ -247,10 +236,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      * Get all the tracks of a user playlist.
      * @param playlistId : The id of the playlist chosen
      */
-    private void getPlaylistTracks(String playlistId, String owner)
-    {
-        if(DEBUG)
+    private void getPlaylistTracks(String playlistId, String owner) {
+        if(DEBUG) {
             Log.d(TAG, "getPlaylistTracks -- owned by: " + owner);
+        }
 
         mPlaylistTrackUris = new ArrayList<>();
         mPlaylistTracks = new ArrayList<>();
@@ -280,7 +269,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
 
                 //Currently Spotify Api has a limit of 50 songs in each query, so for larger playlists
                 //se get the last 30 tracks only.
-                if(mPlaylistTrackUris.size() > 50){
+                if(mPlaylistTrackUris.size() > 50) {
                     Log.e(TAG, "**************************   Playlist is too big:  " + mPlaylistTrackUris.size());
                     int offset = mPlaylistTrackUris.size() - 30;
                     mPlaylistTrackUris = new ArrayList<>(mPlaylistTrackUris.subList(offset, mPlaylistTrackUris.size()-1));
@@ -301,8 +290,7 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
      * Display the list of user playlists in the activity
      * @param list
      */
-    private void displayPlaylists(List<String> list)
-    {
+    private void displayPlaylists(List<String> list) {
         //Get adapter view from layout
         ListView playlistView = (ListView)findViewById(R.id.listV);
 
@@ -331,10 +319,10 @@ public class JukeboxSavedPlaylists extends AppCompatActivity
     /**
      * Launches the service to create a jukebox with the playlist data in Parse backend
      */
-    private void startJukeboxCreation(String playlistName)
-    {
-        if(DEBUG)
+    private void startJukeboxCreation(String playlistName) {
+        if(DEBUG) {
             Log.d(TAG, "Starting Jukebox Creation with playlist:  " + playlistName);
+        }
 
         Intent intent = new Intent(getApplicationContext(), VibeService.class);
         //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);

@@ -1,7 +1,6 @@
 package com.vibejukebox.jukebox.adapters;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,54 +13,46 @@ import com.vibejukebox.jukebox.Track;
 
 import java.util.ArrayList;
 
-public class SongListAdapter extends BaseAdapter
-{
+public class SongListAdapter extends BaseAdapter {
+
 	private static LayoutInflater mInflator = null;
 	Context mContext;
-	//private ArrayList<String> mSongList;
 	private ArrayList<Track> mTrackList;
 	private boolean mShowAddSong;
     private boolean mIsSearch = false;
 
-	public SongListAdapter(Context context, ArrayList<Track> songList, boolean showAddSong)
-	{
+	public SongListAdapter(Context context, ArrayList<Track> songList, boolean showAddSong) {
 		mContext = context;
 		mTrackList = new ArrayList<>(songList);
 		mShowAddSong = showAddSong;
 		mInflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
-    public void setSearch(boolean isSearch)
-    {
+    public void setSearch(boolean isSearch) {
         mIsSearch = isSearch;
     }
 		
 	@Override
-	public int getCount() 
-	{
+	public int getCount() {
         return mTrackList.size();
 	}
 
 	@Override
-	public Object getItem(int position) 
-	{
+	public Object getItem(int position) {
 		return mTrackList.get(position);
 	}
 	
-	public void setTrackList(ArrayList<Track> mTrackList)
-	{
+	public void setTrackList(ArrayList<Track> mTrackList) {
 		this.mTrackList = mTrackList;
 	}
 
 	@Override
-	public long getItemId(int position)
-	{
+	public long getItemId(int position) {
 		return position;
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) 
-	{
+	public View getView(int position, View convertView, ViewGroup parent) {
 		View mView = convertView;
 		if(mView == null)
 			mView = mInflator.inflate(R.layout.viewrow, parent, false);
@@ -90,10 +81,11 @@ public class SongListAdapter extends BaseAdapter
 			imageSpeaker.setVisibility(ImageView.VISIBLE);
             songNameTView.setTextColor(parent.getResources().getColor(R.color.vibe_border));
 		}
-		else
-			imageSpeaker.setVisibility(ImageView.INVISIBLE);
+		else {
+            imageSpeaker.setVisibility(ImageView.INVISIBLE);
+        }
 		
-		if(mShowAddSong){
+		if(mShowAddSong) {
 			imageAdd.setVisibility(ImageView.VISIBLE);
 			imageSpeaker.setVisibility(ImageView.INVISIBLE);
 		}

@@ -19,8 +19,8 @@ import java.util.Map;
 /**
  * Created by Sergex on 10/3/14.
  */
-public class SavedPlayListAdapter extends BaseAdapter{
-
+public class SavedPlayListAdapter extends BaseAdapter
+{
     private Context mContext = null;
     private List<String> mListOfPlaylists;
     private Map<String, Integer> mListOfTrackNumbers;

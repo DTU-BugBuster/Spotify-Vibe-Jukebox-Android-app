@@ -1,12 +1,11 @@
 package com.vibejukebox.jukebox;
 
-
 import android.location.Location;
-import android.net.NetworkInfo.State;
 import android.util.Log;
 
 /**
  * Created by Sergex on 5/27/15.
+ *
  */
 public final class Vibe
 {
@@ -70,24 +69,20 @@ public final class Vibe
         return jukeboxId;
     }*/
 
-    public static Location getCurrentLocation()
-    {
+    public static Location getCurrentLocation() {
         return mCurrentLocation;
     }
 
-    public static void setCurrentLocation(Location location)
-    {
+    public static void setCurrentLocation(Location location) {
         Log.i(TAG, "Location Set:  " + location.getLatitude() + "  " + location.getLongitude());
         mCurrentLocation = location;
     }
 
-    public static void setConnectionState(boolean state)
-    {
+    public static void setConnectionState(boolean state) {
         isConnected = state;
     }
 
-    public static boolean getConnectivityStatus()
-    {
+    public static boolean getConnectivityStatus() {
         return isConnected;
     }
 

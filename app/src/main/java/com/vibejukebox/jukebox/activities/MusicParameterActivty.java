@@ -17,7 +17,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.vibejukebox.jukebox.DebugLog;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.SpotifyClient;
@@ -35,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Pager;
@@ -44,8 +45,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class MusicParameterActivty extends AppCompatActivity
-{
+public class MusicParameterActivty extends AppCompatActivity {
+
     private static final String TAG = MusicParameterActivty.class.getSimpleName();
     private static final boolean DEBUG = DebugLog.DEBUG;
 
@@ -68,9 +69,9 @@ public class MusicParameterActivty extends AppCompatActivity
     private boolean mAcousticnessTouched = false;
     private boolean mDanceTouched = false;
 
-    private TextView mEnergyValueText;
-    private TextView mAcousticValueText;
-    private TextView mDanceValueText;
+    @Bind(R.id.EnergyValueView) TextView mEnergyValueText;
+    @Bind(R.id.AcousticValueView) TextView mAcousticValueText;
+    @Bind(R.id.DanceValueView) TextView mDanceValueText;
 
     private String mPlaylistName;
     private String mArtistName;
@@ -80,11 +81,6 @@ public class MusicParameterActivty extends AppCompatActivity
      */
     List<String> mTrackUris;
     List<Track> mTracks;
-
-    /**
-     * Spotify Api Auth response
-     */
-    //private AuthenticationResponse mAuthResponse;
 
     /**
      * Boolean to create playlist based on favorites or an artist
@@ -115,17 +111,16 @@ public class MusicParameterActivty extends AppCompatActivity
      * Retrieves the stored Access token from Spotify Api
      * @return: Access token string
      */
-    private String getAccessToken()
-    {
-        if(DEBUG)
+    private String getAccessToken() {
+        if(DEBUG) {
             Log.d(TAG, "getAccessToken -- ");
+        }
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         return preferences.getString(VIBE_JUKEBOX_ACCESS_TOKEN_PREF, null);
     }
 
-    private void showServerError()
-    {
+    private void showServerError() {
         Toast.makeText(this, R.string.VIBE_APP_SERVER_ERROR, Toast.LENGTH_LONG).show();
     }
 
@@ -138,9 +133,11 @@ public class MusicParameterActivty extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+        if(actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(false);
         }
+
+        ButterKnife.bind(this);
 
         //Initialize Parameter Sliders
         initUi();
@@ -150,17 +147,15 @@ public class MusicParameterActivty extends AppCompatActivity
     }
 
     @Override
-    protected void onResume()
-    {
+    protected void onResume() {
         super.onResume();
-        if(!mIsArtistRadio){
+        if(!mIsArtistRadio) {
             mTrackUris = new ArrayList<>();
             getSavedTracks();
         }
     }
 
-    private void initValues()
-    {
+    private void initValues() {
         Intent intent = getIntent();
         mIsArtistRadio = intent.getBooleanExtra(Vibe.VIBE_JUKEBOX_ARTIST_RADIO, false);
         //mAuthResponse = intent.getParcelableExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE);
@@ -168,76 +163,75 @@ public class MusicParameterActivty extends AppCompatActivity
         mArtistName = intent.getStringExtra(Vibe.VIBE_JUKEBOX_START_WITH_ARTIST);
     }
 
-    private void initUi()
-    {
-        mEnergyValueText = (TextView)findViewById(R.id.EnergyValueView);
-        mAcousticValueText = (TextView)findViewById(R.id.AcousticValueView);
-        mDanceValueText = (TextView)findViewById(R.id.DanceValueView);
-
+    private void initUi() {
         SeekBar energySlider = (SeekBar)findViewById(R.id.EnergyBar);
-        energySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mEnergyValue = progress*0.01;
-                mEnergyValueText.setText(String.valueOf(progress));
-            }
+        if(energySlider != null) {
+            energySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    mEnergyValue = progress*0.01;
+                    mEnergyValueText.setText(String.valueOf(progress));
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                mEnergyTouched = true;
-            }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    mEnergyTouched = true;
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                mEnergyValue = utilFormatDecimal(mEnergyValue);
-                Log.d(TAG, "--> " + mEnergyValue);
-            }
-        });
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    mEnergyValue = utilFormatDecimal(mEnergyValue);
+                    Log.d(TAG, "--> " + mEnergyValue);
+                }
+            });
+        }
 
         SeekBar acousticnessSlider = (SeekBar)findViewById(R.id.AcousticnessBar);
-        acousticnessSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mAcousticValue = progress*0.01;
-                mAcousticValueText.setText(String.valueOf(progress));
-            }
+        if(acousticnessSlider != null) {
+            acousticnessSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    mAcousticValue = progress*0.01;
+                    mAcousticValueText.setText(String.valueOf(progress));
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                mAcousticnessTouched = true;
-            }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    mAcousticnessTouched = true;
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                mAcousticValue = utilFormatDecimal(mAcousticValue);
-                Log.d(TAG, "--> " + mAcousticValue);
-            }
-        });
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    mAcousticValue = utilFormatDecimal(mAcousticValue);
+                    Log.d(TAG, "--> " + mAcousticValue);
+                }
+            });
+        }
 
         SeekBar danceabilitySlider = (SeekBar)findViewById(R.id.DanceabilityBar);
-        danceabilitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mDanceValue = progress * 0.01;
-                mDanceValueText.setText(String.valueOf(progress));
-            }
+        if(danceabilitySlider != null) {
+            danceabilitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    mDanceValue = progress * 0.01;
+                    mDanceValueText.setText(String.valueOf(progress));
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                mDanceTouched = true;
-            }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    mDanceTouched = true;
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                mDanceValue = utilFormatDecimal(mDanceValue);
-                Log.d(TAG, "--> " + mDanceValue);
-            }
-        });
-
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    mDanceValue = utilFormatDecimal(mDanceValue);
+                    Log.d(TAG, "--> " + mDanceValue);
+                }
+            });
+        }
     }
 
-    private double utilFormatDecimal(double value)
-    {
+    private double utilFormatDecimal(double value) {
         DecimalFormat df = new DecimalFormat(("#.##"));
         String val = df.format(value);
         return Double.valueOf(val);
@@ -247,8 +241,7 @@ public class MusicParameterActivty extends AppCompatActivity
      * Called when the user presses the Launch button after setting parameters
      * @param view: View
      */
-    public void launch(View view)
-    {
+    public void launch(View view) {
         if(mIsArtistRadio) {
             requestArtistRadio();
         } else {
@@ -257,11 +250,14 @@ public class MusicParameterActivty extends AppCompatActivity
         }
     }
 
-    private void startCreatedPlaylist()
-    {
-        Log.e(TAG, "startCreatedPlaylist (starting service)");
-        if(mPlaylistName == null || mPlaylistName.equals(""))
+    private void startCreatedPlaylist() {
+        if(DEBUG) {
+            Log.e(TAG, "startCreatedPlaylist (starting service)");
+        }
+
+        if(mPlaylistName == null || mPlaylistName.equals("")) {
             mPlaylistName = "Vibed Playlist";
+        }
 
         Intent intent = new Intent(this, VibeService.class);
         //intent.putExtra(Vibe.VIBE_JUKEBOX_SPOTIFY_AUTHRESPONSE, mAuthResponse);
@@ -275,10 +271,10 @@ public class MusicParameterActivty extends AppCompatActivity
     /**
      * Launch playlist generation based on a user chosen artist.
      */
-    private void requestArtistRadio()
-    {
-        if(DEBUG)
+    private void requestArtistRadio() {
+        if(DEBUG) {
             Log.d(TAG, "requestArtistRadio with Uri -- " + mArtistName);
+        }
 
         // If the user did not touch a parameter slider that parameter is not taken into
         //account for the playlist generation
@@ -296,8 +292,10 @@ public class MusicParameterActivty extends AppCompatActivity
         SongBackendApi.getInstance().getBackendService().requestTracksFromFavorites(songTask, new Callback<SongResponse>() {
             @Override
             public void success(SongResponse songResponse, Response response) {
-                if(DEBUG)
+                if(DEBUG) {
                     Log.d(TAG, "Successful call to Artist radio backend service. ");
+                }
+
                 mProgressDialog.cancel();
                 parseBackendResponse(songResponse);
             }
@@ -319,10 +317,10 @@ public class MusicParameterActivty extends AppCompatActivity
     }
 
     /** TODO: Backend dev not finished */
-    private void requestVibedPlaylist()
-    {
-        if(DEBUG)
+    private void requestVibedPlaylist() {
+        if(DEBUG) {
             Log.d(TAG, "requestRetroPlaylist --> " + mAcousticValue + " " + mEnergyValue + " " + mDanceValue);
+        }
 
         if(mTrackUris.size() == 0) {
             Toast.makeText(MusicParameterActivty.this, R.string.VIBE_APP_NO_SAVED_SONGS, Toast.LENGTH_LONG).show();
@@ -366,29 +364,30 @@ public class MusicParameterActivty extends AppCompatActivity
      * Function sets each parameter to null if the slider has not been touched by the user
      * @return: Params object
      */
-    private Params getParametersIfZero()
-    {
+    private Params getParametersIfZero() {
         Params params = new Params();
-        if(!mEnergyTouched)
+        if(!mEnergyTouched) {
             params.setEnergy(null);
-        else
+        } else {
             params.setEnergy(mEnergyValue);
+        }
 
-        if(!mAcousticnessTouched)
+        if(!mAcousticnessTouched) {
             params.setAcousticness(null);
-        else
+        } else {
             params.setAcousticness(mAcousticValue);
+        }
 
-        if(!mDanceTouched)
+        if(!mDanceTouched) {
             params.setDanceability(null);
-        else
+        } else {
             params.setDanceability(mDanceValue);
+        }
 
         return params;
     }
 
-    private void resetSliderParameters()
-    {
+    private void resetSliderParameters() {
         SeekBar energySlider = (SeekBar)findViewById(R.id.EnergyBar);
         energySlider.setProgress(0);
 
@@ -407,30 +406,32 @@ public class MusicParameterActivty extends AppCompatActivity
      * Function parses the json response from the backend
      * @param response: SongResponse object
      */
-    private void parseBackendResponse(SongResponse response)
-    {
-        if(DEBUG)
+    private void parseBackendResponse(SongResponse response) {
+        if(DEBUG) {
             Log.d(TAG, "parseBackendResponse");
+        }
 
         mTrackUris = new ArrayList<>(response.getPlaylist());
 
-        if(!mTrackUris.isEmpty())
+        if(!mTrackUris.isEmpty()) {
             getTrackObjects(mTrackUris);
-        else
+        } else {
             Toast.makeText(this, "No matches with those parameters, please try again", Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
      * Get Spotify user saved tracks to generate playlist
      */
-    private void getSavedTracks()
-    {
-        Log.d(TAG, "getSavedTracks");
+    private void getSavedTracks() {
+        if(DEBUG){
+            Log.d(TAG, "getSavedTracks");
+        }
 
         //final List<Track> savedTracks = new ArrayList<>();
         SpotifyApi api = new SpotifyApi();
 
-        if(getAccessToken() == null){
+        if(getAccessToken() == null) {
             Log.e(TAG, "Error: Authentication is null.");
             return;
         }
@@ -446,8 +447,10 @@ public class MusicParameterActivty extends AppCompatActivity
         spotify.getMySavedTracks(options, new Callback<Pager<SavedTrack>>() {
             @Override
             public void success(Pager<SavedTrack> savedTrackPager, Response response) {
-                if(DEBUG)
+                if(DEBUG) {
                     Log.d(TAG, "Success getting saved user's tracks");
+                }
+
                 String trackName;
                 String artist;
 
@@ -479,8 +482,7 @@ public class MusicParameterActivty extends AppCompatActivity
      * Function gets a list of Vibe Track objects from a list of Spotify URIs
      * @param trackURIs: List of Spotify uris
      */
-    private void getTrackObjects(List<String> trackURIs)
-    {
+    private void getTrackObjects(List<String> trackURIs) {
         String trackUriString = SpotifyClient.getTrackIds(trackURIs);
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
@@ -490,8 +492,9 @@ public class MusicParameterActivty extends AppCompatActivity
         spotify.getTracks(trackUriString, new Callback<Tracks>() {
             @Override
             public void success(Tracks tracks, Response response) {
-                if(DEBUG)
+                if(DEBUG) {
                     Log.d(TAG, "Successful call to get Several tracks from Uri list");
+                }
 
                 for (kaaes.spotify.webapi.android.models.Track track : tracks.tracks) {
                     Log.d(TAG, "Track name:  " + track.name);
@@ -516,8 +519,7 @@ public class MusicParameterActivty extends AppCompatActivity
      * Progress dialog to give user a visual feedback that the music playlist
      * is being created in the backend
      */
-    private void launchProcessingDialog()
-    {
+    private void launchProcessingDialog() {
         CharSequence Progress_title = "Creating playlist ...";
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);

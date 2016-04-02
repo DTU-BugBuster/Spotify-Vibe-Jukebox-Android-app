@@ -10,6 +10,7 @@
 }*/
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
 
 android {
     compileSdkVersion 23
@@ -23,16 +24,19 @@ android {
     }
 
     packagingOptions {
+        // Exclude file to avoid
+        // Error: Duplicate files during packaging of APK
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/ASL2.0'
         exclude 'META-INF/license.txt'
         exclude 'META-INF/notice.txt'
-
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
     }
 
-    /*productFlavors {
-    }*/
+    lintOptions {
+        disable 'InvalidPackage'
+    }
 
     /*sourceSets{
         main.java.srcDirs += 'src/main/java/com/vibejukebox.jukebox'
@@ -58,37 +62,45 @@ repositories {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
-    //Parse Library for backend
+    // ------------- Android/Google
+    compile 'com.android.support:appcompat-v7:23.2.1'
+    compile 'com.android.support:support-v4:23.2.1'
+    compile 'com.android.support:design:23.2.1'
+    compile 'com.google.android.gms:play-services-location:8.4.0'
+    compile 'com.google.code.gson:gson:2.4'
+
+    //compile 'org.parceler:parceler:0.2.13'
+
+    //Third Party
+    // ------------- Parse
     compile 'com.parse:parse-android:1.10.2'
 
-    //Handles authentication and authorization for Spotify
+    // ------------- Spotify Api
+    //handles authentication and authorization
     compile 'com.spotify.sdk:spotify-auth:1.0.0-beta12@aar'
-
-    //Handles music playback using the Spotify Api
+    //handles music playback
     compile 'com.spotify.sdk:spotify-player:1.0.0-beta12@aar'
+    //web-service wrapper (Kaaes)
+    compile(name:'spotify-web-api-android-0.3.0', ext:'aar')
 
-    //Spotify Web Api wrapper (Kaaes)
-    compile(name:'spotify-web-api-android-0.2.0', ext:'aar')
-
-    //Dependencies for Android Spotify web Api wrapper
+    // ------------- Square
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.squareup.okhttp:okhttp:2.2.0'
 
-    //REST
-    compile 'com.google.code.gson:gson:2.4'
-    //compile 'org.parceler:parceler:0.2.13'
+    //compile 'com.squareup.dagger:dagger:1.2.2'
+    //provided 'com.squareup.dagger:dagger-compiler:1.2.2'
 
-    compile 'com.android.support:appcompat-v7:23.1.0'
-    compile 'com.android.support:support-v4:23.1.0'
-    compile 'com.android.support:design:23.1.0'
-    compile 'com.google.android.gms:play-services-location:8.3.0'
-    compile 'com.loopj.android:android-async-http:1.4.6'
+    apt 'com.google.dagger:dagger-compiler:2.0.1'
+    compile 'com.google.dagger:dagger:2.0.1' //dagger itself
+    provided 'org.glassfish:javax.annotation:10.0-b28' //needed to resolve compilation errors
 
     //Image URL loading
     compile 'com.squareup.picasso:picasso:2.5.2'
 
-    //REST services
-    compile 'com.jakewharton:butterknife:6.1.0'
+    compile 'com.jakewharton:butterknife:7.0.1'
+
+    // ------------- Other
+    compile 'com.loopj.android:android-async-http:1.4.6'
 
     //Circular ProgressBar
     compile 'com.github.rahatarmanahmed:circularprogressview:2.3.2'
@@ -97,7 +109,7 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.2.1'
 
     //Recycler view
-    compile 'com.android.support:recyclerview-v7:23.1.0'
+    compile 'com.android.support:recyclerview-v7:23.2.1'
 
     //compile 'com.google.protobuf:protobuf-java:2.5.0'
     /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {

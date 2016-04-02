@@ -13,6 +13,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,6 +22,8 @@ import android.view.View;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -37,16 +40,21 @@ import com.vibejukebox.jukebox.JukeboxApplication;
 import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Vibe;
+import com.vibejukebox.jukebox.internal.di.components.SpotifyComponent;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
+import kaaes.spotify.webapi.android.SpotifyApi;
 
 /**
  * Created by Sergex on 7/26/15.
+ *
  */
 public abstract class VibeBaseActivity extends AppCompatActivity implements
-        LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback
-{
+        LocationListener, ConnectionCallbacks, OnConnectionFailedListener, OnRequestPermissionsResultCallback {
+
     private static final String TAG = VibeBaseActivity.class.getSimpleName();
 
     private static final boolean DEBUG = DebugLog.DEBUG;
@@ -96,19 +104,20 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     private View mMainLayout;
 
+    @Inject SpotifyApi mApi;
+
     /** Entry point to Google Play services */
     protected static GoogleApiClient mGoogleApiClient;
 
-    private ParseGeoPoint getGeoPointFromMyLocation(Location location)
-    {
-        if(mGoogleApiClient.isConnected() && location != null)
+    private ParseGeoPoint getGeoPointFromMyLocation(Location location) {
+        if (mGoogleApiClient.isConnected() && location != null) {
             return new ParseGeoPoint(location.getLatitude(), location.getLongitude());
-        else
+        } else {
             return null;
+        }
     }
 
-    protected synchronized void buildGoogleApiClient()
-    {
+    protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -119,14 +128,21 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         mGoogleApiClient.connect();
     }
 
-    protected void createLocationRequest()
-    {
+    protected void createLocationRequest() {
         LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
         locationRequest.setFastestInterval(FAST_CEILING_IN_MILLISECONDS);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         mLocationRequest = locationRequest;
+    }
+
+    /**
+     * Function returns the component built by Dagger with all its dependencies
+     * @return: SpotifyComponent
+     */
+    protected SpotifyComponent getSpotifyComponent() {
+        return ((JukeboxApplication)getApplication()).getSpotifyComponent();
     }
 
     @Override
@@ -138,34 +154,35 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, "** onCreate -- ");
+        }
+
+        getSpotifyComponent().inject(this);
 
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
-        //Connect to location services
-        //buildGoogleApiClient();
-
         //TODO:(Not implemented) boolean is always false, check if it will be needed
-        if(mRequestLocationUpdates)
+        if (mRequestLocationUpdates) {
             createLocationRequest();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, "-- onStart -- ");
+        }
 
         //View for SnackBar
         mMainLayout = findViewById(R.id.MainLayout);
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
             //Location permission not granted yet
             requestLocationPermission();
-        }
-        else{
+        } else {
             Log.d(TAG, " ---- Permission already granted.. ");
             buildGoogleApiClient();
         }
@@ -176,17 +193,18 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         Log.e(TAG, "PERMISSIONS RESULT " + requestCode);
-        switch(requestCode){
+        switch (requestCode) {
             case REQUEST_LOCATION_PERMISSION_CODE:
                 //If request is cancelled the array is empty
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mPermissionGranted = true;
                     buildGoogleApiClient();
                 } else {
                     //Disable location functionality
                     Log.i(TAG, "Location permission was not granted.");
                     mPermissionGranted = false;
-                    Snackbar.make(mMainLayout, R.string.VIBE_PERMISSION_NOT_GRANTED, Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(mMainLayout, R.string.VIBE_PERMISSION_NOT_GRANTED,
+                            Snackbar.LENGTH_SHORT).show();
                 }
 
             default:
@@ -195,13 +213,15 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         }
     }
 
-    private void requestLocationPermission()
-    {
-        Log.e(TAG, "Requesting Location permission.");
-        if(ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)){
+    private void requestLocationPermission() {
+        if (DEBUG) {
+            Log.d(TAG, "Requesting Location permission.");
+        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)) {
             Log.i(TAG, "Displaying an additional explanation of the need of location permission");
-            if(mMainLayout == null){
+            if (mMainLayout == null) {
                 Log.e(TAG, "VIEW LAYOUT NULL!");
                 return;
             }
@@ -227,57 +247,64 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, " ** onResume --");
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, "onPause -- ");
+        }
 
-        if(mRequestLocationUpdates)
+        if (mRequestLocationUpdates) {
             stopLocationUpdates();
+        }
     }
 
     @Override
     protected void onStop() {
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, "onStop -- ");
+        }
 
-        if(mGoogleApiClient != null && mGoogleApiClient.isConnected())
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
+        }
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(DEBUG)
+        if (DEBUG) {
             Log.d(TAG, "onDestroy -- ");
+        }
     }
 
-    protected void startLocationUpdates()
-    {
-        Log.d(TAG, "starting Location updates (Application)");
-        LocationServices.FusedLocationApi.
-                requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+    protected void startLocationUpdates() {
+        if (DEBUG) {
+            Log.d(TAG, "starting Location updates (Base Activity)");
+        }
+
+        //TODO: Integrate location updates (?)
+        /*LocationServices.FusedLocationApi.
+                requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);*/
     }
 
     /**
      * Removes Location updates from the FusedLocation API
      */
-    protected void stopLocationUpdates()
-    {
+    protected void stopLocationUpdates() {
         //Final argument is a LocationListener
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
     }
 
     /** Location Listener */
     @Override
-    public void onLocationChanged(Location location)
-    {
+    public void onLocationChanged(Location location) {
         Log.i(TAG, "Location Changed -- (BaseActivity)");
         Log.d(TAG, "New Location is (Base): " + String.valueOf(location.getLatitude()) + "  "
                 + String.valueOf(location.getLongitude()));
@@ -285,43 +312,61 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     /** Connection Callbacks */
     @Override
-    public void onConnected(Bundle bundle)
-    {
-        if(DEBUG)
+    public void onConnected(Bundle bundle) {
+        if (DEBUG) {
             Log.d(TAG, "onConnected - Connected to location Services (BaseActivity)");
+        }
 
         mLocationServicesConnected = true;
-        if(mGoogleApiClient.isConnected())
+        if (mGoogleApiClient.isConnected()) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+
+                Log.d(TAG, "****  Requesting location permission again ****");
+                requestLocationPermission();
+                return;
+            }
+
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        }
 
         //Request location updates
-        if(mRequestLocationUpdates)
+        if(mRequestLocationUpdates) {
             startLocationUpdates();
+        }
 
         //Store Current location globally
-        Vibe.setCurrentLocation(mLastLocation);
+        if(mLastLocation != null){
+            Vibe.setCurrentLocation(mLastLocation);
+        }
 
         //Once Location services is properly connected we can get nearby Jukeboxes
         //fetchNearbyJukeboxes();
     }
 
     @Override
-    public void onConnectionSuspended(int i)
-    {
+    public void onConnectionSuspended(int i) {
         Log.i(TAG, "Connection Suspended. ");
+
         mLocationServicesConnected = false;
         mGoogleApiClient.connect();
     }
 
     /** Connection Failed Listener */
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult)
-    {
+    public void onConnectionFailed(ConnectionResult connectionResult) {
         //Call connect to attempt to re-establish the connection to Google Play Services
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
         mLocationServicesConnected = false;
 
-        if(mResolvingError){
+        if(mResolvingError) {
             //Already attempting to resolve an error
             return;
         } else if(connectionResult.hasResolution()) {
@@ -343,11 +388,12 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(DEBUG)
+        if(DEBUG) {
             Log.d(TAG, "onActivityResult -- VibeMainActivity -- ");
+        }
 
         //Check if the result comes from the correct activity
-        if(requestCode == SPOTIFY_API_REQUEST_CODE){
+        if(requestCode == SPOTIFY_API_REQUEST_CODE) {
             AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, data);
             switch(response.getType()){
                 //Response was successful and contains auth token
@@ -369,22 +415,21 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
             }
         }
 
-        else if(requestCode == REQUEST_RESOLVE_ERROR){
+        else if(requestCode == REQUEST_RESOLVE_ERROR) {
             mResolvingError = false;
-            if(resultCode == RESULT_OK)
-            {
+            if(resultCode == RESULT_OK) {
                 //Make sure the app is not already connected or attempting to connect
-                if(!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()){
+                if(!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()) {
                     mGoogleApiClient.connect();
                 }
             }
         }
     }
 
-    protected void storeAccessToken(String accessToken)
-    {
-        if(DEBUG)
+    protected void storeAccessToken(String accessToken) {
+        if(DEBUG) {
             Log.d(TAG, "storeAuthResponse - ");
+        }
 
         SharedPreferences preferences = getSharedPreferences(VIBE_JUKEBOX_PREFERENCES, 0);
         SharedPreferences.Editor editor = preferences.edit();
@@ -393,8 +438,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         editor.apply();
     }
 
-    protected void loginToSpotify(Activity contextActivity)
-    {
+    protected void loginToSpotify(Activity contextActivity) {
         AuthenticationRequest.Builder builder  =
                 new AuthenticationRequest.Builder(JukeboxApplication.SPOTIFY_API_CLIENT_ID,
                         AuthenticationResponse.Type.TOKEN,
@@ -411,8 +455,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
         AuthenticationClient.openLoginActivity(contextActivity, SPOTIFY_API_REQUEST_CODE, request);
     }
 
-    private AuthenticationResponse getTestResponse(AuthenticationResponse response)
-    {
+    private AuthenticationResponse getTestResponse(AuthenticationResponse response) {
         AuthenticationResponse.Builder builder = new AuthenticationResponse.Builder();
         builder.setExpiresIn(10);
         builder.setAccessToken(response.getAccessToken());
@@ -428,10 +471,10 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
 
     protected abstract void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList);
 
-    protected void fetchNearbyJukeboxes()
-    {
-        if(DEBUG)
+    protected void fetchNearbyJukeboxes() {
+        if(DEBUG) {
             Log.d(TAG, "fetchNearbyJukeboxes -- ");
+        }
 
         ParseObject.registerSubclass(JukeboxObject.class);
         ParseGeoPoint currentLocation = getGeoPointFromMyLocation(mLastLocation);
@@ -442,8 +485,9 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
             @Override
             public void done(List<JukeboxObject> jukeboxList, ParseException e) {
                 if (e == null) {
-                    if (DEBUG)
+                    if (DEBUG) {
                         Log.d(TAG, "Number of jukeboxes near: " + jukeboxList.size());
+                    }
 
                     nearbyJukeboxesFound(jukeboxList);
                 } else {
@@ -455,8 +499,7 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     }
 
     /* Creates a dialog for an error message */
-    private void showErrorDialog(int errorCode)
-    {
+    private void showErrorDialog(int errorCode) {
         // Create a fragment for the error dialog
         ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
         // Pass the error that should be displayed
@@ -473,13 +516,11 @@ public abstract class VibeBaseActivity extends AppCompatActivity implements
     }
 
     /* A fragment to display an error dialog */
-    public static class ErrorDialogFragment extends DialogFragment
-    {
+    public static class ErrorDialogFragment extends DialogFragment {
         public ErrorDialogFragment() { }
 
         @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState)
-        {
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
             // Get the error code and retrieve the appropriate dialog
             int errorCode = this.getArguments().getInt(DIALOG_ERROR);
             return GooglePlayServicesUtil.getErrorDialog(errorCode,

@@ -14,7 +14,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,8 +25,6 @@ import com.vibejukebox.jukebox.JukeboxObject;
 import com.vibejukebox.jukebox.R;
 import com.vibejukebox.jukebox.Vibe;
 
-import java.util.List;
-
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.UserPrivate;
@@ -35,9 +32,10 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
+import java.util.List;
+
 public class VibeJukeboxMainActivity extends VibeBaseActivity
-        implements ActivityCompat.OnRequestPermissionsResultCallback
-{
+        implements ActivityCompat.OnRequestPermissionsResultCallback {
     /** ----------------------    Fields -----------------------------------*/
 	private static final String TAG = VibeJukeboxMainActivity.class.getSimpleName();
 
@@ -64,8 +62,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         }
     });
 
-    private void showUserNotPremiumDialog()
-    {
+    private void showUserNotPremiumDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.VIBE_APP_NON_PREMIUM_ALERT_TITLE)
                 .setMessage(R.string.VIBE_APP_USER_NOT_PREMIUM_MSG);
@@ -89,21 +86,20 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         builder.create().show();
     }
 
-    private void logoutSpotify()
-    {
+    private void logoutSpotify() {
         AuthenticationClient.clearCookies(this);
     }
 
-    private void showSuggestionToast()
-    {
+    private void showSuggestionToast() {
         Toast.makeText(this, R.string.VIBE_APP_JOIN_JUKEBOX_INSTEAD, Toast.LENGTH_LONG).show();
     }
 
     /** ----------------------------    Parse Jukebox  -----------------------------------*/
-    private String getCreatedJukeboxId()
-    {
-        if(DEBUG)
+    private String getCreatedJukeboxId() {
+        if(DEBUG) {
             Log.d(TAG, "getCreatedJukeboxId -- ");
+        }
+
         SharedPreferences preferences = getSharedPreferences(Vibe.VIBE_JUKEBOX_PREFERENCES, MODE_PRIVATE);
         String jukeboxId = preferences.getString(Vibe.VIBE_JUKEBOX_STRING_PREFERENCE, null);
 
@@ -114,8 +110,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     /**
      * TODO:  FOR TEST, DELETE THIS FUNCTION LATER..
      */
-    private void storeNULLJukeboxID()
-    {
+    private void storeNULLJukeboxID() {
         SharedPreferences preferences = getSharedPreferences("JukeboxPreferences", 0);
         SharedPreferences.Editor editor = preferences.edit();
 
@@ -125,11 +120,11 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 
     //--------------------------------------------------------------------------------------
 	@Override
-	protected void onCreate(Bundle savedInstanceState)
-	{
+	protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(DEBUG)
+        if(DEBUG) {
             Log.d(TAG, "onCreate()");
+        }
 
         String runtime = System.getProperty("java.vm.version");
         Log.e(TAG, "RUNTIME:  " + runtime);
@@ -137,9 +132,9 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         // Possible work around for market launches. See http://code.google.com/p/android/issues/detail?id=2373
         // for more details. Essentially, the market launches the main activity on top of other activities.
         // we never want this to happen. Instead, we check if we are the root and if not, we finish.
-        if(!isTaskRoot()){
+        if(!isTaskRoot()) {
             final Intent intent = getIntent();
-            if(intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN.equals(intent.getAction())){
+            if(intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN.equals(intent.getAction())) {
                 Log.w(TAG, getResources().getString(R.string.VIBE_NOT_ROOT_TASK));
                 finish();
                 return;
@@ -153,15 +148,7 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         //storeNULLJukeboxID();
 	}
 
-    @Override
-    protected void onStart()
-    {
-        super.onStart();
-        if(DEBUG)
-            Log.d(TAG, "onStart -- ");
-    }
-
-    private void setConnectivityStatus(){
+    private void setConnectivityStatus() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
@@ -171,30 +158,31 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
             Vibe.setConnectionState(false);
     }
 
-    private void updateUiStartAppButtons()
-    {
+    private void updateUiStartAppButtons() {
         Button createJukeboxButton = (Button)findViewById(R.id.createJukeboxButton);
-        if(getCreatedJukeboxId() != null){
-            createJukeboxButton.setText(R.string.VIBE_APP_START_JUKEBOX);
-        } else {
-            createJukeboxButton.setText(R.string.VIBE_APP_CREATE_JUKEBOX);
+
+        if(createJukeboxButton != null) {
+            if(getCreatedJukeboxId() != null) {
+                createJukeboxButton.setText(R.string.VIBE_APP_START_JUKEBOX);
+            } else {
+                createJukeboxButton.setText(R.string.VIBE_APP_CREATE_JUKEBOX);
+            }
         }
     }
 
     @Override
-	public boolean onCreateOptionsMenu(Menu menu)
-    {
-		// Inflate the menu; this adds items to the action bar if it is present.
+	public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.vibe_jukebox_main, menu);
 		return true;
 	}
 
 	@Override
-	protected void onResume()
-    {
+	protected void onResume() {
 		super.onResume();
-		if(DEBUG)
-			Log.d(TAG, "onResume -- ");
+		if(DEBUG) {
+            Log.d(TAG, "onResume -- ");
+        }
 
         // Update the main start button depending if a jukebox was already created or not.
         updateUiStartAppButtons();
@@ -204,16 +192,15 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
      * Function called when a user requests to join an active playlist
      * @param view: the view that got clicked
      */
-	public void join(View view)
-	{
-		if(DEBUG)
-			Log.d(TAG, "Joining Jukebox ...");
+	public void join(View view) {
+		if(DEBUG) {
+            Log.d(TAG, "Joining Jukebox ...");
+        }
 
         joinJukebox();
 	}
 
-    private void joinJukebox()
-    {
+    private void joinJukebox() {
         if(mNumJukeboxesNear > 0){
             Intent intent = new Intent(this, JukeboxListOfJukeboxes.class);
             startActivity(intent);
@@ -226,10 +213,8 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
      * Function called when a user wants to start a playlist of its own
      * @param view
      */
-    public void startJukebox(View view)
-    {
-        if(DEBUG)
-            Log.d(TAG, "createNewJukebox -- ");
+    public void startJukebox(View view) {
+        if(DEBUG) Log.d(TAG, "createNewJukebox -- ");
 
         if(!Vibe.getConnectivityStatus()){
             Toast.makeText(this, "Lost connection to Network, please connect and try again",
@@ -238,12 +223,13 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
         }
 
         //User must login to Spotify account to be able to stream music
-        //loginToSpotifyAccount();TODO ,inTEST
+        //loginToSpotifyAccount(); TODO: inTEST
 
-        if(Vibe.getCurrentLocation() == null)
+        if(Vibe.getCurrentLocation() == null) {
             Toast.makeText(this, "Grant Location permission to create a new jukebox. ", Toast.LENGTH_LONG).show();
-        else
+        } else {
             loginToSpotify(this);
+        }
     }
 
     @Override
@@ -254,10 +240,10 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     }
 
     @Override
-    protected void checkSpotifyProduct(final AuthenticationResponse authResponse)
-    {
-        if(DEBUG)
+    protected void checkSpotifyProduct(final AuthenticationResponse authResponse) {
+        if(DEBUG) {
             Log.d(TAG, "checkSpotifyProduct () -- ");
+        }
 
         SpotifyApi api = new SpotifyApi();
         api.setAccessToken(authResponse.getAccessToken());
@@ -284,24 +270,22 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
     /**
      * Launch Activity to choose starting playlist
      */
-    private void launchPlayListSelection(/*AuthenticationResponse authResponse*/)
-    {
+    private void launchPlayListSelection(/*AuthenticationResponse authResponse*/) {
         Intent intent = new Intent(this, PlaylistSelectionActivity.class);
         intent.putExtra(Vibe.VIBE_JUKEBOX_ID, getCreatedJukeboxId());
         startActivity(intent);
     }
 
     @Override
-    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList)
-    {
+    protected void nearbyJukeboxesFound(List<JukeboxObject> jukeboxList) {
         int numberOfJukeboxFound = jukeboxList.size();
         mNumJukeboxesNear = numberOfJukeboxFound;
 
         final TextView tv = (TextView)findViewById(R.id.nearbyJukeboxesTextView);
 
-        if(numberOfJukeboxFound == 0)
+        if(numberOfJukeboxFound == 0) {
             tv.setText(R.string.no_nearby_jukeboxes_found);
-        else {
+        } else {
             String text = String.valueOf(numberOfJukeboxFound) + " " +
                     getString(R.string.nearby_jukeboxes_found);
             tv.setText(text);

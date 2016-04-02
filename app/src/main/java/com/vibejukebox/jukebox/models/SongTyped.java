@@ -4,6 +4,7 @@ import retrofit.mime.TypedString;
 
 /**
  * Created by Sergex on 6/29/15.
+ *
  */
 public class SongTyped extends TypedString {
     public SongTyped(String string) {
