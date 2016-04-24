@@ -211,8 +211,10 @@ public class JukeboxPlaylistActivity extends VibeBaseActivity implements
 
                     //Update the Jukebox title
                     ActionBar actionbar = getSupportActionBar();
-                    if(actionbar != null)
+
+                    if(actionbar != null) {
                         actionbar.setTitle(msg.getData().getString("name"));
+                    }
 
                     createTrackListFromURIs(msg.getData().getStringArrayList("list"));
                     break;

@@ -15,6 +15,7 @@ apply plugin: 'com.neenbedankt.android-apt'
 android {
     compileSdkVersion 23
     buildToolsVersion '23.0.2'
+
     defaultConfig {
         applicationId "com.vibejukebox.jukebox"
         minSdkVersion 15
@@ -42,6 +43,10 @@ android {
         main.java.srcDirs += 'src/main/java/com/vibejukebox.jukebox'
     }*/
 
+    dataBinding {
+        enabled  = true
+    }
+
     buildTypes {
         release {
             //runProguard false
@@ -53,6 +58,7 @@ android {
 
 repositories {
     mavenCentral()
+    jcenter()
     maven { url "https://jitpack.io"}
     flatDir {
         dirs 'libs'
@@ -63,9 +69,9 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     // ------------- Android/Google
-    compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:support-v4:23.2.1'
-    compile 'com.android.support:design:23.2.1'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:design:23.3.0'
     compile 'com.google.android.gms:play-services-location:8.4.0'
     compile 'com.google.code.gson:gson:2.4'
 
@@ -74,6 +80,8 @@ dependencies {
     //Third Party
     // ------------- Parse
     compile 'com.parse:parse-android:1.10.2'
+
+    compile 'com.fernandocejas:arrow:1.0.0'
 
     // ------------- Spotify Api
     //handles authentication and authorization
@@ -109,7 +117,7 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.2.1'
 
     //Recycler view
-    compile 'com.android.support:recyclerview-v7:23.2.1'
+    compile 'com.android.support:recyclerview-v7:23.3.0'
 
     //compile 'com.google.protobuf:protobuf-java:2.5.0'
     /*compile('net.sf.json-lib:json-lib:2.4:jdk15') {

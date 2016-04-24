@@ -1,6 +1,7 @@
 package com.vibejukebox.jukebox.adapters;
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,19 +17,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 /**
  * Created by Sergex on 10/3/14.
  */
-public class SavedPlayListAdapter extends BaseAdapter
-{
+public class SavedPlayListAdapter extends BaseAdapter {
+
+    static class ViewHolder {
+        @Bind(R.id.playlistName) TextView playlistNameTextView;
+        @Bind(R.id.playlistArt) ImageView playlistArtView;
+        @Bind(R.id.playlistNumTracks) TextView playlistNumTracksView;
+
+        public ViewHolder(View view) {
+            ButterKnife.bind(this, view);
+        }
+    }
+
     private Context mContext = null;
+
     private List<String> mListOfPlaylists;
+
     private Map<String, Integer> mListOfTrackNumbers;
+
     private Map<String, String> mPlaylistImages;
+
     private static LayoutInflater mInflator = null;
 
-    public SavedPlayListAdapter(Context context, List<String> listOfPlaylists, Map<String, Integer> trackNumbers, Map<String, String> albumImageUrls)
-    {
+    public SavedPlayListAdapter(Context context, List<String> listOfPlaylists,
+                                Map<String, Integer> trackNumbers, Map<String,
+                                String> albumImageUrls) {
         mContext = context;
         mListOfPlaylists = new ArrayList<>(listOfPlaylists);
         mListOfTrackNumbers = new HashMap<>(trackNumbers);
@@ -38,44 +57,46 @@ public class SavedPlayListAdapter extends BaseAdapter
 
     @Override
     public int getCount() {
-        int listSize = mListOfPlaylists.size();
-        return listSize;
+        return  mListOfPlaylists.size();
     }
 
     @Override
-    public Object getItem(int position)
-    {
+    public Object getItem(int position) {
         return null;
     }
 
     @Override
-    public long getItemId(int position)
-    {
+    public long getItemId(int position) {
         return 0;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent)
-    {
-        View mView = convertView;
-        if(mView == null)
-            mView = mInflator.inflate(R.layout.playlistrow, parent, false);
+    public View getView(int position, View convertView, ViewGroup parent) {
 
-        //Name of playlist chosen
-        TextView tvName = (TextView)mView.findViewById(R.id.playlistName);
+        ViewHolder viewHolder;
+
+        if(convertView != null) {
+            viewHolder = (ViewHolder) convertView.getTag();
+        } else {
+            convertView = mInflator.inflate(R.layout.playlistrow, parent, false);
+            viewHolder = new ViewHolder(convertView);
+            convertView.setTag(viewHolder);
+        }
+
+        TextView playlistNameText = viewHolder.playlistNameTextView;
         String playlistName = mListOfPlaylists.get(position);
-        tvName.setTextColor(parent.getResources().getColor(R.color.vibe_white));
-        tvName.setText(playlistName);
+        playlistNameText.setTextColor(parent.getResources().getColor(R.color.vibe_white));
+        playlistNameText.setText(playlistName);
 
         //Playlist Art
-        ImageView artView = (ImageView)mView.findViewById(R.id.playlistArt);
-        Picasso.with(mView.getContext()).load(mPlaylistImages.get(playlistName)).centerCrop().fit().into(artView);
+        ImageView playlistArt = viewHolder.playlistArtView;
+        Picasso.with(convertView.getContext()).load(mPlaylistImages.get(playlistName)).centerCrop().fit().into(playlistArt);
 
         //Number of tracks in each Playlist
-        TextView tvNumOfTracks = (TextView)mView.findViewById(R.id.playlistNumTracks);
-        tvNumOfTracks.setTextColor(parent.getResources().getColor(R.color.vibe_white));
-        tvNumOfTracks.setText(String.valueOf(mListOfTrackNumbers.get(playlistName) + " tracks"));
+        TextView playlistNumTracksView = viewHolder.playlistNumTracksView;
+        playlistNumTracksView.setTextColor(ContextCompat.getColor(mContext, R.color.vibe_white));
+        playlistNumTracksView.setText(String.valueOf(mListOfTrackNumbers.get(playlistName) + " tracks"));
 
-        return mView;
+        return convertView;
     }
 }

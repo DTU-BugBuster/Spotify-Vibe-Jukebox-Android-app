@@ -13,7 +13,22 @@ import com.vibejukebox.jukebox.Track;
 
 import java.util.ArrayList;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 public class SongListAdapter extends BaseAdapter {
+
+    static class ViewHolder {
+
+        @Bind(R.id.songName) TextView songNameTextView;
+        @Bind(R.id.artistName) TextView artistNameTextView;
+        @Bind(R.id.add_song_plus_icon) ImageView imageAdd;
+        @Bind(R.id.speaker_icon_playing_track) ImageView imageSpeaker;
+
+        public ViewHolder(View view) {
+            ButterKnife.bind(this, view);
+        }
+    }
 
 	private static LayoutInflater mInflator = null;
 	Context mContext;
@@ -53,35 +68,40 @@ public class SongListAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		View mView = convertView;
-		if(mView == null)
-			mView = mInflator.inflate(R.layout.viewrow, parent, false);
+
+        ViewHolder viewHolder;
+        if(convertView != null){
+            viewHolder = (ViewHolder)convertView.getTag();
+        } else {
+            convertView = mInflator.inflate(R.layout.viewrow, parent, false);
+            viewHolder = new ViewHolder(convertView);
+            convertView.setTag(viewHolder);
+        }
 
         /** Song Name Text view */
-		TextView songNameTView = (TextView) mView.findViewById(R.id.songName);
-		Track track = mTrackList.get(position);
+        TextView songNameTView = viewHolder.songNameTextView;
+        Track track = mTrackList.get(position);
         songNameTView.setTextColor(parent.getResources().getColor(R.color.vibe_white));
         songNameTView.setText(track.getTrackName());
 
         /** Artist Name Text view */
-		TextView artistTView = (TextView) mView.findViewById(R.id.artistName);
+        TextView artistTView = viewHolder.artistNameTextView;
         artistTView.setTextColor(parent.getResources().getColor(R.color.vibe_white));
         artistTView.setText(track.getArtistName());
 
         /** Add song(plus) icon */
-		ImageView imageAdd = (ImageView)mView.findViewById(R.id.add_song_plus_icon);
-		imageAdd.setFocusable(false);
+        ImageView imageAdd = viewHolder.imageAdd;
+        imageAdd.setFocusable(false);
 		imageAdd.setVisibility(ImageView.INVISIBLE);
 
         /** Speaker icon */
-		ImageView imageSpeaker = (ImageView) mView.findViewById(R.id.speaker_icon_playing_track);
-		imageSpeaker.setFocusable(false);
+        ImageView imageSpeaker = viewHolder.imageSpeaker;
+        imageSpeaker.setFocusable(false);
 	
 		if(position == 0 && !mIsSearch) {
 			imageSpeaker.setVisibility(ImageView.VISIBLE);
             songNameTView.setTextColor(parent.getResources().getColor(R.color.vibe_border));
-		}
-		else {
+		} else {
             imageSpeaker.setVisibility(ImageView.INVISIBLE);
         }
 		
@@ -89,6 +109,7 @@ public class SongListAdapter extends BaseAdapter {
 			imageAdd.setVisibility(ImageView.VISIBLE);
 			imageSpeaker.setVisibility(ImageView.INVISIBLE);
 		}
-		return mView;
+
+		return convertView;
 	}
 }

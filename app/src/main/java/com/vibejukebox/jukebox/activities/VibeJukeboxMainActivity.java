@@ -149,13 +149,16 @@ public class VibeJukeboxMainActivity extends VibeBaseActivity
 	}
 
     private void setConnectivityStatus() {
+
         ConnectivityManager connectivityManager =
                 (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-        if(activeNetwork != null)
+
+        if(activeNetwork != null) {
             Vibe.setConnectionState(true);
-        else
+        } else {
             Vibe.setConnectionState(false);
+        }
     }
 
     private void updateUiStartAppButtons() {
